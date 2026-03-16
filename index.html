@@ -44,6 +44,11 @@
         <div class="card"><label>Win Rate</label><b id="dashWR">0%</b></div>
     </div>
 
+    <div class="card" style="grid-column: span 2; background: rgba(46, 204, 113, 0.1); border-color: var(--win);">
+    <label>กำไรที่ยังไม่ได้ถอน (Net Profit in Port)</label>
+    <b id="dashRemProfit" style="font-size: 1.8rem; color: var(--win);">0.00</b>
+</div>
+
     <div class="form-box">
         <div class="grid">
             <div class="input-group"><label>วันที่</label><input type="date" id="inDate"></div>
@@ -88,6 +93,7 @@
         } catch (e) { console.log("กำลังโหลดข้อมูล..."); }
     }
 
+document.getElementById('dashRemProfit').innerText = remProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
     // ฟังก์ชันบันทึกข้อมูล
     async function save() {
         const btn = document.querySelector('.btn-save');
@@ -159,9 +165,14 @@
 
         if(records.length > 0) {
             const last = records[records.length-1];
+            const remProfit = last.ttP - last.sumWd; // คำนวณกำไรที่ยังไม่ได้ถอน
+
             document.getElementById('dashBal').innerText = last.bal.toLocaleString();
             document.getElementById('dashTtP').innerText = last.ttP.toFixed(2);
             document.getElementById('dashWR').innerText = ((wins/records.length)*100).toFixed(0) + "%";
+            
+            // แสดงยอดกำไรที่ถอนได้
+            document.getElementById('dashRemProfit').innerText = remProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
         }
     }
     window.onload = load;
