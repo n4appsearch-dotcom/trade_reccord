@@ -151,10 +151,18 @@ document.getElementById('dashRemProfit').innerText = remProfit.toLocaleString(un
     function updateUI() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
+        
         let wins = 0;
+        let totalProfitEver = 0; // ยอดรวมกำไรทั้งหมด (G)
+        let totalWithdrawnEver = 0; // ยอดรวมที่ถอนไปแล้วทั้งหมด (J)
         
         records.forEach(r => {
             if(r.status === 'W') wins++;
+            
+            // สั่งให้ระบบบวกยอดรวมจาก "ทุกรายการ" ในอดีต
+            totalProfitEver += r.p;
+            totalWithdrawnEver += r.wd;
+
             tbody.innerHTML += `<tr>
                 <td>${r.date}<br><small style="color:var(--gold-l)">${r.asset}</small></td>
                 <td class="${r.status==='W'?'w':'l'}">${r.p>=0?'+':''}${r.p.toFixed(2)}</td>
@@ -165,13 +173,15 @@ document.getElementById('dashRemProfit').innerText = remProfit.toLocaleString(un
 
         if(records.length > 0) {
             const last = records[records.length-1];
-            const remProfit = last.ttP - last.sumWd; // คำนวณกำไรที่ยังไม่ได้ถอน
+            
+            // คำนวณกำไรที่ยังอยู่ในพอร์ต (กำไรทั้งหมด - ถอนทั้งหมด)
+            const remProfit = totalProfitEver - totalWithdrawnEver;
 
             document.getElementById('dashBal').innerText = last.bal.toLocaleString();
-            document.getElementById('dashTtP').innerText = last.ttP.toFixed(2);
+            document.getElementById('dashTtP').innerText = totalProfitEver.toLocaleString(undefined, {minimumFractionDigits: 2});
             document.getElementById('dashWR').innerText = ((wins/records.length)*100).toFixed(0) + "%";
             
-            // แสดงยอดกำไรที่ถอนได้
+            // แสดงยอดกำไรที่เหลือในพอร์ต (ตัวเลขที่คุณต้องการ)
             document.getElementById('dashRemProfit').innerText = remProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
         }
     }
