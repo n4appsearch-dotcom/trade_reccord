@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Trading Journal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --emerald: #0a261a; --gold: #d4af37; --gold-l: #f9e295; --win: #2ecc71; --loss: #e74c3c; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--emerald); color: #fff; margin: 0; padding: 15px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .card { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; border: 1px solid var(--gold); text-align: center; }
+        .card label { font-size: 0.7rem; color: var(--gold-l); display: block; margin-bottom: 3px; }
+        .card b { font-size: 1.1rem; }
+        .main-card { grid-column: span 2; background: linear-gradient(135deg, #0a261a, #1a4d33); padding: 20px; }
+        .form-box { background: rgba(255,255,255,0.08); padding: 15px; border-radius: 20px; border: 1px solid rgba(212,175,55,0.2); margin-bottom: 15px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .input-group { margin-bottom: 10px; }
+        label { font-size: 0.8rem; color: var(--gold-l); display: block; margin-bottom: 3px; }
+        input, select { width: 100%; padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--gold); border-radius: 8px; color: #fff; box-sizing: border-box; font-size: 1rem; }
+        .btn-save { width: 100%; padding: 14px; background: var(--gold); color: var(--emerald); border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 5px; }
+        .history { background: rgba(0,0,0,0.2); border-radius: 15px; overflow: hidden; border: 1px solid rgba(212,175,55,0.1); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        th { background: rgba(212,175,55,0.15); padding: 8px; color: var(--gold); text-align: left; }
+        td { padding: 10px 8px; border-top: 1px solid rgba(212,175,55,0.05); }
+        .w { color: var(--win); font-weight: bold; }
+        .l { color: var(--loss); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 style="text-align:center; color:var(--gold); margin: 10px 0;">✨ TRADING JOURNAL</h2>
+
+    <div class="dashboard">
+        <div class="card main-card">
+            <label>ยอดคงเหลือวันนี้ (H)</label>
+            <b id="dashBal" style="font-size: 2rem; color: var(--gold);">0.00</b>
+        </div>
+        <div class="card"><label>กำไรสะสม (G)</label><b id="dashTtP">0.00</b></div>
+        <div class="card"><label>Win Rate</label><b id="dashWR">0%</b></div>
+    </div>
+
+    <div class="form-box">
+        <div class="grid">
+            <div class="input-group"><label>วันที่</label><input type="date" id="inDate"></div>
+            <div class="input-group"><label>สินทรัพย์ (I)</label><input type="text" id="inAsset" placeholder="เช่น FLOW"></div>
+            <div class="input-group"><label>ทุนเดิม (B)</label><input type="number" id="inCap"></div>
+            <div class="input-group"><label>กำไร/ขาดทุน (C)</label><input type="number" id="inProfit" placeholder="ติดลบใส่ -"></div>
+            <div class="input-group"><label>ลงเพิ่ม (E)</label><input type="number" id="inAdd" value="0"></div>
+            <div class="input-group"><label>ยอดถอน (F)</label><input type="number" id="inWd" value="0"></div>
+            <div class="input-group" style="grid-column: span 2;">
+                <label>สถานะ (K)</label>
+                <select id="inStatus"><option value="W">Win ✅</option><option value="L">Loss ❌</option></select>
+            </div>
+        </div>
+        <button class="btn-save" onclick="save()">💾 บันทึกและซิงก์ข้อมูล</button>
+    </div>
+
+    <div class="history">
+        <table>
+            <thead><tr><th>วันที่/สินทรัพย์</th><th>กำไร</th><th>%</th><th>คงเหลือ</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // ลิงก์ของคุณถูกใส่ไว้ที่นี่แล้วครับ
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyS1XTTL1W549GHaxVUZ82DEfUDz9FYoXDYXx7ePaD63vhob3lwKuD9uZEaNnH6_MLW/exec';
+    let records = [];
+
+    document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
+
+    async function load() {
+        try {
+            const res = await fetch(SCRIPT_URL);
+            const data = await res.json();
+            records = data.map(r => ({
+                date: new Date(r[0]).toLocaleDateString('th-TH', {day:'numeric', month:'short'}),
+                p: r[2], pct: r[3], bal: r[7], asset: r[8], status: r[10]
+            }));
+            updateUI();
+        } catch (e) { console.log("กำลังโหลดข้อมูล..."); }
+    }
+
+    async function save() {
+        const date = document.getElementById('inDate').value;
+        const asset = document.getElementById('inAsset').value;
+        const c = parseFloat(document.getElementById('inCap').value) || 0;
+        const p = parseFloat(document.getElementById('inProfit').value) || 0;
+        const add = parseFloat(document.getElementById('inAdd').value) || 0;
+        const wd = parseFloat(document.getElementById('inWd').value) || 0;
+        const status = document.getElementById('inStatus').value;
+
+        const pct = (c > 0) ? (p / c * 100).toFixed(2) : 0;
+        
+        // คำนวณเบื้องต้นก่อนซิงก์
+        let ttP = 0;
+        if(records.length > 0) {
+            // ดึงค่าสะสมล่าสุดจากชีต (ถ้ามีข้อมูล)
+        }
+
+        const payload = { date, c, p, pct, add, wd, ttP: 0, bal: (c+p+add-wd), asset, sumWd: 0, status };
+
+        try {
+            document.querySelector('.btn-save').innerText = "⌛ กำลังซิงก์...";
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            location.reload();
+        } catch (e) { alert("บันทึกไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต"); }
+    }
+
+    function updateUI() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        let wins = 0;
+        records.forEach(r => {
+            if(r.status === 'W') wins++;
+            tbody.innerHTML += `<tr>
+                <td>${r.date}<br><small style="color:var(--gold-l)">${r.asset}</small></td>
+                <td class="${r.status==='W'?'w':'l'}">${r.p>=0?'+':''}${r.p}</td>
+                <td>${r.pct}%</td>
+                <td style="font-weight:bold;">${r.bal.toLocaleString()}</td>
+            </tr>`;
+        });
+        if(records.length > 0) {
+            const last = records[records.length-1];
+            document.getElementById('dashBal').innerText = last.bal.toLocaleString();
+            document.getElementById('dashWR').innerText = ((wins/records.length)*100).toFixed(0) + "%";
+        }
+    }
+    window.onload = load;
+</script>
+</body>
+</html>
