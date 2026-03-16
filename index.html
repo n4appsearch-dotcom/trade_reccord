@@ -77,12 +77,13 @@
 
     async function load() {
         try {
-            const res = await fetch(SCRIPT_URL);
-            const data = await res.json();
-            records = data.map(r => ({
-                date: new Date(r[0]).toLocaleDateString('th-TH', {day:'numeric', month:'short'}),
-                p: r[2], pct: r[3], bal: r[7], asset: r[8], status: r[10]
-            }));
+            const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors', // บังคับไม่ให้โดนบล็อก
+    cache: 'no-cache',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+});
             updateUI();
         } catch (e) { console.log("กำลังโหลดข้อมูล..."); }
     }
