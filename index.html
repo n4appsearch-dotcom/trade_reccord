@@ -3,25 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Trading Journal</title>
+    <title>Premium Trading Journal 2569</title>
+    
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="logotrade.png"> 
+    <link rel="apple-touch-icon" href="logotrade.png">
+    
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --emerald: #0a261a; --gold: #d4af37; --gold-l: #f9e295; --win: #2ecc71; --loss: #e74c3c; }
-        body { font-family: 'Sarabun', sans-serif; background: var(--emerald); color: #fff; margin: 0; padding: 15px; }
+        :root { 
+            --emerald: #0a261a; 
+            --gold: #d4af37; 
+            --gold-l: #f9e295; 
+            --win: #2ecc71; 
+            --loss: #e74c3c; 
+            --white: #ffffff;
+        }
+        body { font-family: 'Sarabun', sans-serif; background: var(--emerald); color: var(--white); margin: 0; padding: 15px; }
         .container { max-width: 500px; margin: 0 auto; }
+        
+        /* Dashboard */
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .card { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; border: 1px solid var(--gold); text-align: center; }
         .card label { font-size: 0.7rem; color: var(--gold-l); display: block; margin-bottom: 3px; }
         .card b { font-size: 1.1rem; }
         .main-card { grid-column: span 2; background: linear-gradient(135deg, #0a261a, #1a4d33); padding: 20px; }
+        .profit-card { grid-column: span 2; background: rgba(46, 204, 113, 0.1); border-color: var(--win); }
+
+        /* Form */
         .form-box { background: rgba(255,255,255,0.08); padding: 15px; border-radius: 20px; border: 1px solid rgba(212,175,55,0.2); margin-bottom: 15px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .input-group { margin-bottom: 10px; }
         label { font-size: 0.8rem; color: var(--gold-l); display: block; margin-bottom: 3px; }
         input, select { width: 100%; padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--gold); border-radius: 8px; color: #fff; box-sizing: border-box; font-size: 16px; }
+        
         .btn-save { width: 100%; padding: 14px; background: var(--gold); color: var(--emerald); border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 5px; }
+        
+        /* History Table */
         .history { background: rgba(0,0,0,0.2); border-radius: 15px; overflow: hidden; border: 1px solid rgba(212,175,55,0.1); }
         table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
         th { background: rgba(212,175,55,0.15); padding: 8px; color: var(--gold); text-align: left; }
@@ -38,28 +55,31 @@
     <div class="dashboard">
         <div class="card main-card">
             <label>ยอดคงเหลือวันนี้ (H)</label>
-            <b id="dashBal" style="font-size: 2rem; color: var(--gold);">0.00</b>
+            <b id="dashBal" style="font-size: 2.2rem; color: var(--gold);">0.00</b>
         </div>
         <div class="card"><label>กำไรสะสม (G)</label><b id="dashTtP">0.00</b></div>
         <div class="card"><label>Win Rate</label><b id="dashWR">0%</b></div>
+        
+        <div class="card profit-card">
+            <label>กำไรที่ยังไม่ได้ถอน (Net Profit in Port)</label>
+            <b id="dashRemProfit" style="font-size: 1.8rem; color: var(--win);">0.00</b>
+        </div>
     </div>
-
-    <div class="card" style="grid-column: span 2; background: rgba(46, 204, 113, 0.1); border-color: var(--win);">
-    <label>กำไรที่ยังไม่ได้ถอน (Net Profit in Port)</label>
-    <b id="dashRemProfit" style="font-size: 1.8rem; color: var(--win);">0.00</b>
-</div>
 
     <div class="form-box">
         <div class="grid">
             <div class="input-group"><label>วันที่</label><input type="date" id="inDate"></div>
             <div class="input-group"><label>สินทรัพย์ (I)</label><input type="text" id="inAsset" placeholder="เช่น FLOW"></div>
-            <div class="input-group"><label>ทุนเดิม (B)</label><input type="number" id="inCap"></div>
-            <div class="input-group"><label>กำไร/ขาดทุน (C)</label><input type="number" id="inProfit" placeholder="ติดลบใส่ -"></div>
+            <div class="input-group"><label>ทุนเดิม (B)</label><input type="number" id="inCap" placeholder="0.00"></div>
+            <div class="input-group"><label>กำไร/ขาดทุน (C)</label><input type="number" id="inProfit" placeholder="ขาดทุนใส่ -"></div>
             <div class="input-group"><label>ลงเพิ่ม (E)</label><input type="number" id="inAdd" value="0"></div>
             <div class="input-group"><label>ยอดถอน (F)</label><input type="number" id="inWd" value="0"></div>
             <div class="input-group" style="grid-column: span 2;">
                 <label>สถานะ (K)</label>
-                <select id="inStatus"><option value="W">Win ✅</option><option value="L">Loss ❌</option></select>
+                <select id="inStatus">
+                    <option value="W">Win ✅</option>
+                    <option value="L">Loss ❌</option>
+                </select>
             </div>
         </div>
         <button class="btn-save" onclick="save()">💾 บันทึกและซิงก์ข้อมูล</button>
@@ -74,118 +94,115 @@
 </div>
 
 <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1BSUekcdRUU1wDNSaW-pkDT8AjTjrTp7qzjPRwHfsDzjoTf63G2OIcbtKJuN7LZC6/exec';
+    // URL ของคุณ
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyS1XTTL1W549GHaxVUZ82DEfUDz9FYoXDYXx7ePaD63vhob3lwKuD9uZEaNnH6_MLW/exec';
     let records = [];
 
     document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
 
-    // ฟังก์ชันโหลดข้อมูล (แก้ไขให้เป็น GET ที่ถูกต้อง)
+    // โหลดข้อมูลจาก Google Sheets
     async function load() {
         try {
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
-            // ดึงข้อมูลมาเก็บในรูปแบบที่แอปเข้าใจ
+            if (!data || data.length === 0) return;
+
             records = data.map(r => ({
-                date: new Date(r[0]).toLocaleDateString('th-TH', {day:'numeric', month:'short'}),
-                c: r[1], p: r[2], pct: r[3], add: r[4], wd: r[5], ttP: r[6], bal: r[7], asset: r[8], sumWd: r[9], status: r[10]
+                dateDisp: new Date(r[0]).toLocaleDateString('th-TH', {day:'numeric', month:'short'}),
+                c: parseFloat(r[1]) || 0,
+                p: parseFloat(r[2]) || 0,
+                pct: parseFloat(r[3]) || 0,
+                add: parseFloat(r[4]) || 0,
+                wd: parseFloat(r[5]) || 0,
+                ttP: parseFloat(r[6]) || 0,
+                bal: parseFloat(r[7]) || 0,
+                asset: r[8] || '',
+                sumWd: parseFloat(r[9]) || 0,
+                status: r[10] || 'W'
             }));
             updateUI();
         } catch (e) { console.log("กำลังโหลดข้อมูล..."); }
     }
 
-document.getElementById('dashRemProfit').innerText = remProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
-    // ฟังก์ชันบันทึกข้อมูล
+    function updateUI() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        let wins = 0;
+        let totalProfitEver = 0;
+        let totalWithdrawnEver = 0;
+
+        // เตรียมข้อมูลแสดงผล (กลับด้านเอาล่าสุดขึ้นบน)
+        const displayRecords = [...records].reverse();
+
+        records.forEach(r => {
+            if(r.status === 'W' || r.status === 'Win') wins++;
+            totalProfitEver += r.p;
+            totalWithdrawnEver += r.wd;
+        });
+
+        displayRecords.forEach(r => {
+            tbody.innerHTML += `<tr>
+                <td>${r.dateDisp}<br><small style="color:var(--gold-l)">${r.asset}</small></td>
+                <td class="${(r.status==='W'||r.status==='Win')?'w':'l'}">${r.p>=0?'+':''}${r.p.toFixed(2)}</td>
+                <td>${r.pct}%</td>
+                <td style="font-weight:bold;">${r.bal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            </tr>`;
+        });
+
+        if(records.length > 0) {
+            const latest = records[records.length - 1];
+            const remProfit = totalProfitEver - totalWithdrawnEver;
+
+            document.getElementById('dashBal').innerText = latest.bal.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('dashTtP').innerText = totalProfitEver.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('dashWR').innerText = ((wins/records.length)*100).toFixed(0) + "%";
+            document.getElementById('dashRemProfit').innerText = remProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            // ใส่ยอดคงเหลือล่าสุดเป็นทุนเริ่มต้นให้อัตโนมัติ
+            document.getElementById('inCap').value = latest.bal;
+        }
+    }
+
     async function save() {
         const btn = document.querySelector('.btn-save');
-        const date = document.getElementById('inDate').value;
-        const asset = document.getElementById('inAsset').value;
         const c = parseFloat(document.getElementById('inCap').value) || 0;
         const p = parseFloat(document.getElementById('inProfit').value) || 0;
         const add = parseFloat(document.getElementById('inAdd').value) || 0;
         const wd = parseFloat(document.getElementById('inWd').value) || 0;
-        const status = document.getElementById('inStatus').value;
 
-        const pct = (c > 0) ? (p / c * 100).toFixed(2) : 0;
-        
-        // คำนวณค่าสะสม (TtP และ SumWd) ต่อจากข้อมูลเดิม
-        let lastTtP = records.length > 0 ? records[records.length-1].ttP : 0;
-        let lastSumWd = records.length > 0 ? records[records.length-1].sumWd : 0;
-        
-        const currentTtP = lastTtP + p;
-        const currentSumWd = lastSumWd + wd;
-        const currentBal = c + p + add - wd;
+        const lastTtP = records.length > 0 ? records[records.length-1].ttP : 0;
+        const lastSumWd = records.length > 0 ? records[records.length-1].sumWd : 0;
 
-        const payload = { 
-            date, c, p, pct, add, wd, 
-            ttP: currentTtP, 
-            bal: currentBal, 
-            asset, 
-            sumWd: currentSumWd, 
-            status 
+        const payload = {
+            date: document.getElementById('inDate').value,
+            asset: document.getElementById('inAsset').value,
+            c: c,
+            p: p,
+            pct: (c > 0) ? (p / c * 100).toFixed(2) : 0,
+            add: add,
+            wd: wd,
+            ttP: lastTtP + p,
+            bal: c + p + add - wd,
+            sumWd: lastSumWd + wd,
+            status: document.getElementById('inStatus').value
         };
 
         try {
             btn.innerText = "⌛ กำลังบันทึก...";
             btn.disabled = true;
-
             await fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                cache: 'no-cache',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
-            // รอ 2 วินาทีเพื่อให้ Sheets ประมวลผล แล้วค่อยโหลดใหม่
-            setTimeout(() => {
-                location.reload();
-            }, 2000);
-
+            setTimeout(() => { location.reload(); }, 1500);
         } catch (e) {
-            alert("บันทึกไม่สำเร็จ: " + e.message);
+            alert("บันทึกไม่สำเร็จ");
             btn.disabled = false;
-            btn.innerText = "💾 บันทึกและซิงก์ข้อมูล";
-        }
-    }
-
-    function updateUI() {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        
-        let wins = 0;
-        let totalProfitEver = 0; // ยอดรวมกำไรทั้งหมด (G)
-        let totalWithdrawnEver = 0; // ยอดรวมที่ถอนไปแล้วทั้งหมด (J)
-        
-        records.forEach(r => {
-            if(r.status === 'W') wins++;
-            
-            // สั่งให้ระบบบวกยอดรวมจาก "ทุกรายการ" ในอดีต
-            totalProfitEver += r.p;
-            totalWithdrawnEver += r.wd;
-
-            tbody.innerHTML += `<tr>
-                <td>${r.date}<br><small style="color:var(--gold-l)">${r.asset}</small></td>
-                <td class="${r.status==='W'?'w':'l'}">${r.p>=0?'+':''}${r.p.toFixed(2)}</td>
-                <td>${r.pct}%</td>
-                <td style="font-weight:bold;">${r.bal.toLocaleString()}</td>
-            </tr>`;
-        });
-
-        if(records.length > 0) {
-            const last = records[records.length-1];
-            
-            // คำนวณกำไรที่ยังอยู่ในพอร์ต (กำไรทั้งหมด - ถอนทั้งหมด)
-            const remProfit = totalProfitEver - totalWithdrawnEver;
-
-            document.getElementById('dashBal').innerText = last.bal.toLocaleString();
-            document.getElementById('dashTtP').innerText = totalProfitEver.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('dashWR').innerText = ((wins/records.length)*100).toFixed(0) + "%";
-            
-            // แสดงยอดกำไรที่เหลือในพอร์ต (ตัวเลขที่คุณต้องการ)
-            document.getElementById('dashRemProfit').innerText = remProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
         }
     }
     window.onload = load;
 </script>
+
 </body>
 </html>
