@@ -1,0 +1,15 @@
+{
+  "short_name": "TradeLog",
+  "name": "Trading Journal 2569",
+  "icons": [
+    {
+      "src": "crypto.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0a261a",
+  "background_color": "#0a261a"
+}
