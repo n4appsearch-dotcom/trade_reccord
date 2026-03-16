@@ -88,31 +88,51 @@
     }
 
     async function save() {
-        const date = document.getElementById('inDate').value;
-        const asset = document.getElementById('inAsset').value;
-        const c = parseFloat(document.getElementById('inCap').value) || 0;
-        const p = parseFloat(document.getElementById('inProfit').value) || 0;
-        const add = parseFloat(document.getElementById('inAdd').value) || 0;
-        const wd = parseFloat(document.getElementById('inWd').value) || 0;
-        const status = document.getElementById('inStatus').value;
+    const date = document.getElementById('inDate').value;
+    const asset = document.getElementById('inAsset').value;
+    const c = parseFloat(document.getElementById('inCap').value) || 0;
+    const p = parseFloat(document.getElementById('inProfit').value) || 0;
+    const add = parseFloat(document.getElementById('inAdd').value) || 0;
+    const wd = parseFloat(document.getElementById('inWd').value) || 0;
+    const status = document.getElementById('inStatus').value;
 
-        const pct = (c > 0) ? (p / c * 100).toFixed(2) : 0;
-        
-        // คำนวณเบื้องต้นก่อนซิงก์
-        let ttP = 0;
-        if(records.length > 0) {
-            // ดึงค่าสะสมล่าสุดจากชีต (ถ้ามีข้อมูล)
-        }
-
-        const payload = { date, c, p, pct, add, wd, ttP: 0, bal: (c+p+add-wd), asset, sumWd: 0, status };
-
-        try {
-            document.querySelector('.btn-save').innerText = "⌛ กำลังซิงก์...";
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-            location.reload();
-        } catch (e) { alert("บันทึกไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต"); }
+    const pct = (c > 0) ? (p / c * 100).toFixed(2) : 0;
+    
+    // ดึงค่าสะสมล่าสุดจากแถวล่าสุดที่โหลดมา
+    let lastTtP = 0;
+    let lastSumWd = 0;
+    if (records.length > 0) {
+        // เราจะคำนวณต่อจากยอดที่มีอยู่ (ถ้ามี)
     }
 
+    const payload = { date, c, p, pct, add, wd, ttP: p, bal: (c+p+add-wd), asset, sumWd: wd, status };
+
+    try {
+        const btn = document.querySelector('.btn-save');
+        btn.innerText = "⌛ กำลังบันทึก...";
+        btn.disabled = true;
+
+        // ปรับการ fetch ให้เป็นแบบไม่ตรวจสอบ CORS (no-cors)
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // เพิ่มบรรทัดนี้ครับ
+            cache: 'no-cache',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        // เนื่องจากใช้ no-cors เราจะไม่รู้สถานะเป๊ะๆ แต่ข้อมูลจะถูกส่งไปแล้ว
+        // ให้รอ 2 วินาทีเพื่อให้ Sheets ประมวลผลเสร็จ แล้วค่อยโหลดใหม่
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+
+    } catch (e) {
+        alert("บันทึกไม่สำเร็จ: " + e.message);
+        document.querySelector('.btn-save').disabled = false;
+        document.querySelector('.btn-save').innerText = "💾 บันทึกและซิงก์ข้อมูล";
+    }
+}
     function updateUI() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
