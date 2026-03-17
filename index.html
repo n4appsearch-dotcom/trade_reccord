@@ -515,7 +515,7 @@
     function updateChart() {
         const ctx = document.getElementById('equityChart').getContext('2d');
         const labels = records.map(r => r.dateDisp);
-        const data = records.map(r => toNum(r.bal));
+        const data = records.map(r => toNum(r.ttp));
 
         if (myChart) myChart.destroy();
 
@@ -524,7 +524,7 @@
             data: {
                 labels,
                 datasets: [{
-                    label: 'ยอดเงินคงเหลือ',
+                    label: 'กำไรสะสม',
                     data,
                     borderColor: '#d4af37',
                     backgroundColor: 'rgba(212, 175, 55, 0.1)',
