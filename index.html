@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Journal 2569 - Dashboard</title>
+    <title>Trading Journal Nathakorn</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="logotrade.png">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
@@ -260,7 +260,7 @@
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ8SLlPvhJFwMxrt_sMw9RqEaz3UM3pQRW9Jnb-SBPyD2YHDnIAsNLP0Pkz-9oWvrE/exec';
-    const CACHE_KEY = 'trading_journal_cache_v4';
+    const CACHE_KEY = 'trading_journal_cache_v5';
 
     let records = [];
     let myChart = null;
@@ -395,7 +395,7 @@
             if (Array.isArray(cache) && cache.length) {
                 records = recalculateRecords(cache);
                 renderAll();
-                setStatus(`โหลดข้อมูลจากเครื่องสำเร็จ ${records.length} รายการ`);
+                setStatus(`โหลดข้อมูลสำเร็จ ${records.length} รายการ`);
             }
         } catch (e) {
             console.error(e);
@@ -419,7 +419,7 @@
 
             script.onerror = function() {
                 cleanup();
-                reject(new Error('โหลดข้อมูลแบบ JSONP ไม่สำเร็จ'));
+                reject(new Error('โหลดข้อมูลไม่สำเร็จ'));
             };
 
             script.src = `${SCRIPT_URL}?callback=${cbName}&t=${Date.now()}`;
@@ -429,7 +429,7 @@
 
     async function syncFromServer() {
         try {
-            setStatus('กำลังโหลดข้อมูลจาก Google Sheet...');
+            setStatus('กำลังโหลดข้อมูล...');
             const data = await loadJSONP();
 
             if (!Array.isArray(data)) {
@@ -439,13 +439,13 @@
             const normalized = data.map(normalizeRow).filter(Boolean);
 
             if (!normalized.length) {
-                throw new Error('ไม่มีข้อมูลในชีต หรืออ่านข้อมูลไม่ได้');
+                throw new Error('ไม่มีข้อมูลในฐานข้อมูล หรืออ่านข้อมูลไม่ได้');
             }
 
             records = mergeRecords(normalized, []);
             saveCache();
             renderAll();
-            setStatus(`ซิงก์สำเร็จ ${records.length} รายการ`);
+            setStatus(`ซิงก์ข้อมูลสำเร็จ ${records.length} รายการ`);
         } catch (e) {
             console.error(e);
             setStatus('โหลดข้อมูลไม่สำเร็จ: ' + e.message, 'err');
@@ -481,7 +481,9 @@
             totalW += toNum(r.wd);
         });
 
-        [...records].reverse().forEach(r => {
+        const recentRecords = records.slice(-7).reverse();
+
+        recentRecords.forEach(r => {
             const isWin = String(r.status).toUpperCase().includes('W');
             tbody.innerHTML += `
                 <tr>
@@ -608,11 +610,11 @@
             document.getElementById('inWd').value = '0';
             document.getElementById('inStatus').value = 'W';
 
-            setStatus('บันทึกลงหน้าแอปแล้ว กำลังซิงก์ข้อมูลจริงจากชีต...');
+            setStatus('บันทึกสำเร็จ กำลังซิงก์ข้อมูล...');
             setTimeout(syncFromServer, 1500);
         } catch (e) {
             console.error(e);
-            setStatus('บันทึกขึ้นหน้าแอปแล้ว แต่ส่งไปชีตไม่สำเร็จ', 'err');
+            setStatus('บันทึกสำเร็จ แต่ส่งไปฐานข้อมูลไม่สำเร็จ', 'err');
         } finally {
             btn.innerText = '💾 บันทึกและซิงก์ข้อมูล';
             btn.disabled = false;
