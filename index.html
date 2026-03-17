@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Journal Nathakorn</title>
+    <title>Trading Journal 2569 - Dashboard</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="logotrade.png">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
@@ -30,7 +30,6 @@
             margin: 0 auto;
         }
 
-        /* Dashboard */
         .dashboard {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -69,16 +68,15 @@
             border-color: var(--win);
         }
 
-        /* Chart Area */
         .chart-container {
             background: rgba(0,0,0,0.3);
             border-radius: 15px;
             padding: 15px;
             margin-bottom: 15px;
             border: 1px solid rgba(212,175,55,0.1);
+            min-height: 220px;
         }
 
-        /* Form */
         .form-box {
             background: rgba(255,255,255,0.08);
             padding: 15px;
@@ -127,7 +125,6 @@
             cursor: not-allowed;
         }
 
-        /* Table */
         .history {
             background: rgba(0,0,0,0.2);
             border-radius: 15px;
@@ -153,14 +150,29 @@
             border-top: 1px solid rgba(212,175,55,0.05);
         }
 
-        .w {
-            color: var(--win);
-            font-weight: bold;
+        .w { color: var(--win); font-weight: bold; }
+        .l { color: var(--loss); font-weight: bold; }
+
+        .status-box {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            display: none;
         }
 
-        .l {
-            color: var(--loss);
-            font-weight: bold;
+        .status-ok {
+            display: block;
+            background: rgba(46, 204, 113, 0.12);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            color: #b9ffd2;
+        }
+
+        .status-err {
+            display: block;
+            background: rgba(231, 76, 60, 0.12);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            color: #ffd2cd;
         }
     </style>
 </head>
@@ -168,6 +180,8 @@
 
 <div class="container">
     <h2 style="text-align:center; color:var(--gold); margin: 10px 0;">📈 TRADING JOURNAL Nathakorn</h2>
+
+    <div id="statusBox" class="status-box"></div>
 
     <div class="dashboard">
         <div class="card main-card">
@@ -221,8 +235,8 @@
             <div class="input-group" style="grid-column: span 2;">
                 <label style="font-size:0.75rem; color:var(--gold-l);">สถานะ</label>
                 <select id="inStatus">
-                    <option value="Win">Win ✅</option>
-                    <option value="Loss">Loss ❌</option>
+                    <option value="W">Win ✅</option>
+                    <option value="L">Loss ❌</option>
                 </select>
             </div>
         </div>
@@ -246,23 +260,61 @@
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyS1XTTL1W549GHaxVUZ82DEfUDz9FYoXDYXx7ePaD63vhob3lwKuD9uZEaNnH6_MLW/exec';
-    const CACHE_KEY = 'trading_journal_cache_v2';
+    const CACHE_KEY = 'trading_journal_cache_v3';
 
     let records = [];
     let myChart = null;
 
-    document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
+    const statusBox = document.getElementById('statusBox');
+    const inDate = document.getElementById('inDate');
+
+    inDate.value = new Date().toISOString().split('T')[0];
+
+    function setStatus(msg, type = 'ok') {
+        statusBox.className = 'status-box ' + (type === 'err' ? 'status-err' : 'status-ok');
+        statusBox.textContent = msg;
+    }
+
+    function clearStatus() {
+        statusBox.className = 'status-box';
+        statusBox.textContent = '';
+    }
 
     function toNum(v) {
         const n = parseFloat(v);
         return Number.isFinite(n) ? n : 0;
     }
 
+    function isHeaderRow(row) {
+        if (Array.isArray(row)) {
+            return String(row[0] || '').includes('วันที่');
+        }
+        if (row && typeof row === 'object') {
+            const values = Object.values(row).join(' ');
+            return values.includes('วันที่') || values.includes('ทุน');
+        }
+        return false;
+    }
+
     function formatDateDisplay(dateStr) {
         if (!dateStr) return '-';
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return dateStr;
-        return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        return d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function normalizeDateOnly(value) {
+        if (!value) return '';
+        const d = new Date(value);
+        if (isNaN(d.getTime())) {
+            const s = String(value).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+            return '';
+        }
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     function getCurrentCapital() {
@@ -282,7 +334,7 @@
             toNum(r.p).toFixed(2),
             toNum(r.add).toFixed(2),
             toNum(r.wd).toFixed(2),
-            (r.status || '').toLowerCase()
+            String(r.status || '').trim().toUpperCase()
         ].join('|');
     }
 
@@ -292,6 +344,50 @@
             const db = new Date(b.rawDate || 0).getTime();
             return da - db;
         });
+    }
+
+    function normalizeRow(row) {
+        if (!row || isHeaderRow(row)) return null;
+
+        if (Array.isArray(row)) {
+            const rawDate = normalizeDateOnly(row[0]);
+            if (!rawDate) return null;
+
+            return {
+                rawDate,
+                c: toNum(row[1]),
+                p: toNum(row[2]),
+                pct: toNum(row[3]),
+                add: toNum(row[4]),
+                wd: toNum(row[5]),
+                ttP: toNum(row[6]),
+                bal: toNum(row[7]),
+                asset: row[8] || '',
+                sumWd: toNum(row[9]),
+                status: String(row[10] || 'W').trim().toUpperCase()
+            };
+        }
+
+        if (typeof row === 'object') {
+            const rawDate = normalizeDateOnly(row.date || row.Date || row['วันที่']);
+            if (!rawDate) return null;
+
+            return {
+                rawDate,
+                c: toNum(row.c ?? row.capital ?? row['ทุน'] ?? row['B']),
+                p: toNum(row.p ?? row.profit ?? row['กำไร/ขาดทุน'] ?? row['C']),
+                pct: toNum(row.pct ?? row.percent ?? row['% เพิ่ม/ลด'] ?? row['D']),
+                add: toNum(row.add ?? row['ลงทุนเพิ่ม'] ?? row['E']),
+                wd: toNum(row.wd ?? row.withdraw ?? row['ยอดถอน'] ?? row['F']),
+                ttP: toNum(row.ttP ?? row['กำไรสะสม'] ?? row['G']),
+                bal: toNum(row.bal ?? row.balance ?? row['ยอดคงเหลือวันนี้'] ?? row['H']),
+                asset: row.asset ?? row['สินทรัพย์'] ?? row['I'] ?? '',
+                sumWd: toNum(row.sumWd ?? row['ยอดถอนสะสม'] ?? row['J']),
+                status: String(row.status ?? row['สถานะ'] ?? row['K'] ?? 'W').trim().toUpperCase()
+            };
+        }
+
+        return null;
     }
 
     function recalculateRecords(list) {
@@ -308,29 +404,27 @@
             cumulativeWithdraw += wd;
 
             return {
-                rawDate: r.rawDate || '',
+                rawDate: r.rawDate,
                 dateDisp: formatDateDisplay(r.rawDate),
-                c: c,
-                p: p,
+                c,
+                p,
                 pct: c > 0 ? Number((p / c * 100).toFixed(2)) : 0,
-                add: add,
-                wd: wd,
+                add,
+                wd,
                 ttP: Number(cumulativeProfit.toFixed(2)),
                 bal: Number((c + p + add - wd).toFixed(2)),
                 asset: r.asset || '',
                 sumWd: Number(cumulativeWithdraw.toFixed(2)),
-                status: r.status || 'Win'
+                status: String(r.status || 'W').trim().toUpperCase()
             };
         });
     }
 
     function mergeRecords(serverRecords, localRecords) {
         const map = new Map();
-
         [...localRecords, ...serverRecords].forEach(r => {
-            map.set(recordKey(r), r);
+            if (r) map.set(recordKey(r), r);
         });
-
         return recalculateRecords([...map.values()]);
     }
 
@@ -344,41 +438,47 @@
             if (Array.isArray(cache) && cache.length) {
                 records = recalculateRecords(cache);
                 renderAll();
+                setStatus(`โหลดข้อมูลจากเครื่องสำเร็จ ${records.length} รายการ`);
             }
         } catch (e) {
             console.error('Load cache error:', e);
         }
     }
 
-    function normalizeSheetRow(r) {
-        return {
-            rawDate: r[0] ? new Date(r[0]).toISOString().split('T')[0] : '',
-            c: toNum(r[1]),
-            p: toNum(r[2]),
-            pct: toNum(r[3]),
-            add: toNum(r[4]),
-            wd: toNum(r[5]),
-            ttP: toNum(r[6]),
-            bal: toNum(r[7]),
-            asset: r[8] || '',
-            sumWd: toNum(r[9]),
-            status: r[10] || 'Win'
-        };
-    }
-
     async function syncFromServer() {
         try {
+            setStatus('กำลังโหลดข้อมูลจาก Google Sheet...');
             const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`, { cache: 'no-store' });
-            const data = await res.json();
 
-            if (!Array.isArray(data)) return;
+            const text = await res.text();
+            let data;
 
-            const serverRecords = data.map(normalizeSheetRow);
-            records = mergeRecords(serverRecords, records);
+            try {
+                data = JSON.parse(text);
+            } catch (jsonErr) {
+                console.error('Response text:', text);
+                throw new Error('ข้อมูลที่ Apps Script ส่งกลับมาไม่ใช่ JSON');
+            }
+
+            if (!Array.isArray(data)) {
+                throw new Error('ข้อมูลที่ได้ไม่ใช่ array');
+            }
+
+            const normalized = data
+                .map(normalizeRow)
+                .filter(Boolean);
+
+            if (!normalized.length) {
+                throw new Error('อ่านข้อมูลได้ แต่ไม่มีรายการที่ใช้ได้');
+            }
+
+            records = mergeRecords(normalized, []);
             saveCache();
             renderAll();
+            setStatus(`ซิงก์สำเร็จ ${records.length} รายการ`);
         } catch (e) {
             console.error('Sync error:', e);
+            setStatus('โหลดข้อมูลไม่สำเร็จ: ' + e.message, 'err');
         }
     }
 
@@ -405,7 +505,7 @@
         let totalW = 0;
 
         records.forEach(r => {
-            const isWin = (r.status || '').toLowerCase().includes('win') || r.status === 'W';
+            const isWin = String(r.status).toUpperCase().includes('W');
             if (isWin) wins++;
             totalP += toNum(r.p);
             totalW += toNum(r.wd);
@@ -414,8 +514,7 @@
         const displayRecords = [...records].reverse();
 
         displayRecords.forEach(r => {
-            const isWin = (r.status || '').toLowerCase().includes('win') || r.status === 'W';
-
+            const isWin = String(r.status).toUpperCase().includes('W');
             tbody.innerHTML += `
                 <tr>
                     <td>${r.dateDisp}<br><small style="color:var(--gold-l)">${r.asset || '-'}</small></td>
@@ -453,10 +552,10 @@
         myChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels,
                 datasets: [{
                     label: 'ยอดเงินคงเหลือ',
-                    data: data,
+                    data,
                     borderColor: '#d4af37',
                     backgroundColor: 'rgba(212, 175, 55, 0.1)',
                     borderWidth: 2,
@@ -466,9 +565,7 @@
             },
             options: {
                 responsive: true,
-                plugins: {
-                    legend: { display: false }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     y: {
                         grid: { color: 'rgba(255,255,255,0.05)' },
@@ -537,21 +634,21 @@
                 })
             });
 
-            setTimeout(syncFromServer, 1200);
-
             document.getElementById('inAsset').value = '';
             document.getElementById('inProfit').value = '';
             document.getElementById('inAdd').value = '0';
             document.getElementById('inWd').value = '0';
-            document.getElementById('inStatus').value = 'Win';
+            document.getElementById('inStatus').value = 'W';
 
-            fillCurrentCapital();
+            setStatus('บันทึกลงหน้าแอปแล้ว และกำลังดึงข้อมูลจริงจากชีต...');
+            setTimeout(syncFromServer, 1500);
         } catch (e) {
             console.error('Save error:', e);
-            alert('บันทึกขึ้นหน้าจอแล้ว แต่ซิงก์ server ไม่สำเร็จในรอบนี้');
+            setStatus('บันทึกขึ้นหน้าแอปแล้ว แต่ซิงก์ server ไม่สำเร็จ', 'err');
         } finally {
             btn.innerText = '💾 บันทึกและซิงก์ข้อมูล';
             btn.disabled = false;
+            fillCurrentCapital();
         }
     }
 
