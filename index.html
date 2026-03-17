@@ -357,7 +357,7 @@
             const add = toNum(r.add);
             const wd = toNum(r.wd);
 
-            cumulativeProfit += p;
+           
             cumulativeWithdraw += wd;
 
             return {
@@ -368,7 +368,7 @@
                 pct: c > 0 ? Number((p / c * 100).toFixed(2)) : 0,
                 add,
                 wd,
-                ttP: Number(cumulativeProfit.toFixed(2)),
+                ttP: toNum(r.ttP),
                 bal: Number((c + p + add - wd).toFixed(2)),
                 asset: r.asset || '',
                 sumWd: Number(cumulativeWithdraw.toFixed(2)),
