@@ -3,54 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Journal 2569 - Dashboard</title>
+    <title>Trading Journal Nathakorn</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="logotrade.png">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --emerald: #0a261a; --gold: #d4af37; --gold-l: #f9e295; --win: #2ecc71; --loss: #e74c3c; }
-        body { font-family: 'Sarabun', sans-serif; background: var(--emerald); color: #fff; margin: 0; padding: 15px; }
-        .container { max-width: 500px; margin: 0 auto; }
-        
+        :root {
+            --emerald: #0a261a;
+            --gold: #d4af37;
+            --gold-l: #f9e295;
+            --win: #2ecc71;
+            --loss: #e74c3c;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: var(--emerald);
+            color: #fff;
+            margin: 0;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
         /* Dashboard */
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .card { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; border: 1px solid var(--gold); text-align: center; }
-        .card label { font-size: 0.7rem; color: var(--gold-l); display: block; margin-bottom: 3px; }
-        .card b { font-size: 1.1rem; }
-        .main-card { grid-column: span 2; background: linear-gradient(135deg, #0a261a, #1a4d33); padding: 20px; }
-        .profit-card { grid-column: span 2; background: rgba(46, 204, 113, 0.12); border-color: var(--win); }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 15px;
+            border: 1px solid var(--gold);
+            text-align: center;
+        }
+
+        .card label {
+            font-size: 0.7rem;
+            color: var(--gold-l);
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .card b {
+            font-size: 1.1rem;
+        }
+
+        .main-card {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #0a261a, #1a4d33);
+            padding: 20px;
+        }
+
+        .profit-card {
+            grid-column: span 2;
+            background: rgba(46, 204, 113, 0.12);
+            border-color: var(--win);
+        }
 
         /* Chart Area */
-        .chart-container { background: rgba(0,0,0,0.3); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid rgba(212,175,55,0.1); }
-        
+        .chart-container {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(212,175,55,0.1);
+        }
+
         /* Form */
-        .form-box { background: rgba(255,255,255,0.08); padding: 15px; border-radius: 20px; border: 1px solid rgba(212,175,55,0.2); margin-bottom: 15px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        input, select { width: 100%; padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--gold); border-radius: 8px; color: #fff; box-sizing: border-box; font-size: 16px; }
-        .btn-save { width: 100%; padding: 14px; background: var(--gold); color: var(--emerald); border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 10px; }
-        
+        .form-box {
+            background: rgba(255,255,255,0.08);
+            padding: 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(212,175,55,0.2);
+            margin-bottom: 15px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        input[readonly] {
+            opacity: 0.85;
+            cursor: not-allowed;
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 14px;
+            background: var(--gold);
+            color: var(--emerald);
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        .btn-save:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
         /* Table */
-        .history { background: rgba(0,0,0,0.2); border-radius: 15px; overflow: hidden; border: 1px solid rgba(212,175,55,0.1); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
-        th { background: rgba(212,175,55,0.15); padding: 8px; color: var(--gold); text-align: left; }
-        td { padding: 10px 8px; border-top: 1px solid rgba(212,175,55,0.05); }
-        .w { color: var(--win); font-weight: bold; }
-        .l { color: var(--loss); font-weight: bold; }
+        .history {
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(212,175,55,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+
+        th {
+            background: rgba(212,175,55,0.15);
+            padding: 8px;
+            color: var(--gold);
+            text-align: left;
+        }
+
+        td {
+            padding: 10px 8px;
+            border-top: 1px solid rgba(212,175,55,0.05);
+        }
+
+        .w {
+            color: var(--win);
+            font-weight: bold;
+        }
+
+        .l {
+            color: var(--loss);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align:center; color:var(--gold); margin: 10px 0;">📈 TRADING JOURNAL 2569</h2>
+    <h2 style="text-align:center; color:var(--gold); margin: 10px 0;">📈 TRADING JOURNAL Nathakorn</h2>
 
     <div class="dashboard">
         <div class="card main-card">
-            <label>ยอดคงเหลือปัจจุบัน (H)</label>
+            <label>ยอดคงเหลือปัจจุบัน</label>
             <b id="dashBal" style="font-size: 2.2rem; color: var(--gold);">0.00</b>
         </div>
-        <div class="card"><label>กำไรสะสม (G)</label><b id="dashTtP">0.00</b></div>
-        <div class="card"><label>Win Rate</label><b id="dashWR">0%</b></div>
+        <div class="card">
+            <label>กำไรสะสม</label>
+            <b id="dashTtP">0.00</b>
+        </div>
+        <div class="card">
+            <label>Win Rate</label>
+            <b id="dashWR">0%</b>
+        </div>
         <div class="card profit-card">
             <label>กำไรที่ยังไม่ได้ถอน (ถอนได้ทันที)</label>
             <b id="dashRemProfit" style="font-size: 1.8rem; color: var(--win);">0.00</b>
@@ -63,15 +194,36 @@
 
     <div class="form-box">
         <div class="grid">
-            <div class="input-group"><label style="font-size:0.75rem; color:var(--gold-l);">วันที่</label><input type="date" id="inDate"></div>
-            <div class="input-group"><label style="font-size:0.75rem; color:var(--gold-l);">สินทรัพย์ (I)</label><input type="text" id="inAsset" placeholder="เช่น FLOW"></div>
-            <div class="input-group"><label style="font-size:0.75rem; color:var(--gold-l);">ทุนเดิม (B)</label><input type="number" id="inCap"></div>
-            <div class="input-group"><label style="font-size:0.75rem; color:var(--gold-l);">กำไร/ขาดทุน (C)</label><input type="number" id="inProfit" placeholder="ติดลบใส่ -"></div>
-            <div class="input-group"><label style="font-size:0.75rem; color:var(--gold-l);">ลงทุนเพิ่ม (E)</label><input type="number" id="inAdd" value="0"></div>
-            <div class="input-group"><label style="font-size:0.75rem; color:var(--gold-l);">ยอดถอน (F)</label><input type="number" id="inWd" value="0"></div>
+            <div class="input-group">
+                <label style="font-size:0.75rem; color:var(--gold-l);">วันที่</label>
+                <input type="date" id="inDate">
+            </div>
+            <div class="input-group">
+                <label style="font-size:0.75rem; color:var(--gold-l);">สินทรัพย์</label>
+                <input type="text" id="inAsset" placeholder="เช่น FLOW">
+            </div>
+            <div class="input-group">
+                <label style="font-size:0.75rem; color:var(--gold-l);">ทุนเดิม</label>
+                <input type="number" id="inCap" readonly placeholder="ระบบดึงให้อัตโนมัติ">
+            </div>
+            <div class="input-group">
+                <label style="font-size:0.75rem; color:var(--gold-l);">กำไร/ขาดทุน</label>
+                <input type="number" id="inProfit" placeholder="ติดลบใส่ -">
+            </div>
+            <div class="input-group">
+                <label style="font-size:0.75rem; color:var(--gold-l);">ลงทุนเพิ่ม</label>
+                <input type="number" id="inAdd" value="0">
+            </div>
+            <div class="input-group">
+                <label style="font-size:0.75rem; color:var(--gold-l);">ยอดถอน</label>
+                <input type="number" id="inWd" value="0">
+            </div>
             <div class="input-group" style="grid-column: span 2;">
-                <label style="font-size:0.75rem; color:var(--gold-l);">สถานะ (K)</label>
-                <select id="inStatus"><option value="Win">Win ✅</option><option value="Loss">Loss ❌</option></select>
+                <label style="font-size:0.75rem; color:var(--gold-l);">สถานะ</label>
+                <select id="inStatus">
+                    <option value="Win">Win ✅</option>
+                    <option value="Loss">Loss ❌</option>
+                </select>
             </div>
         </div>
         <button class="btn-save" onclick="save()">💾 บันทึกและซิงก์ข้อมูล</button>
@@ -79,7 +231,14 @@
 
     <div class="history">
         <table>
-            <thead><tr><th>วันที่</th><th>ผลกำไร</th><th>%</th><th>ยอดคงเหลือ</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>วันที่</th>
+                    <th>ผลกำไร</th>
+                    <th>%</th>
+                    <th>ยอดคงเหลือ</th>
+                </tr>
+            </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
@@ -87,77 +246,210 @@
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyS1XTTL1W549GHaxVUZ82DEfUDz9FYoXDYXx7ePaD63vhob3lwKuD9uZEaNnH6_MLW/exec';
+    const CACHE_KEY = 'trading_journal_cache_v2';
+
     let records = [];
     let myChart = null;
 
     document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
 
-    async function load() {
-        try {
-            const res = await fetch(SCRIPT_URL);
-            const data = await res.json();
-            if (!data || data.length === 0) return;
+    function toNum(v) {
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n : 0;
+    }
 
-            // Mapping ข้อมูลจาก Sheet 11 คอลัมน์
-            records = data.map(r => ({
-                dateDisp: new Date(r[0]).toLocaleDateString('th-TH', {day:'numeric', month:'short'}),
-                c: parseFloat(r[1]) || 0,
-                p: parseFloat(r[2]) || 0,
-                pct: parseFloat(r[3]) || 0,
-                add: parseFloat(r[4]) || 0,
-                wd: parseFloat(r[5]) || 0,
-                ttP: parseFloat(r[6]) || 0,
-                bal: parseFloat(r[7]) || 0,
-                asset: r[8] || '',
-                sumWd: parseFloat(r[9]) || 0,
-                status: r[10] || 'Win'
-            }));
-            updateUI();
-            updateChart();
-        } catch (e) { console.error("Error loading:", e); }
+    function formatDateDisplay(dateStr) {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+    }
+
+    function getCurrentCapital() {
+        if (!records.length) return 0;
+        return toNum(records[records.length - 1].bal);
+    }
+
+    function fillCurrentCapital() {
+        document.getElementById('inCap').value = getCurrentCapital();
+    }
+
+    function recordKey(r) {
+        return [
+            r.rawDate || '',
+            r.asset || '',
+            toNum(r.c).toFixed(2),
+            toNum(r.p).toFixed(2),
+            toNum(r.add).toFixed(2),
+            toNum(r.wd).toFixed(2),
+            (r.status || '').toLowerCase()
+        ].join('|');
+    }
+
+    function sortRecords(list) {
+        return [...list].sort((a, b) => {
+            const da = new Date(a.rawDate || 0).getTime();
+            const db = new Date(b.rawDate || 0).getTime();
+            return da - db;
+        });
+    }
+
+    function recalculateRecords(list) {
+        let cumulativeProfit = 0;
+        let cumulativeWithdraw = 0;
+
+        return sortRecords(list).map(r => {
+            const c = toNum(r.c);
+            const p = toNum(r.p);
+            const add = toNum(r.add);
+            const wd = toNum(r.wd);
+
+            cumulativeProfit += p;
+            cumulativeWithdraw += wd;
+
+            return {
+                rawDate: r.rawDate || '',
+                dateDisp: formatDateDisplay(r.rawDate),
+                c: c,
+                p: p,
+                pct: c > 0 ? Number((p / c * 100).toFixed(2)) : 0,
+                add: add,
+                wd: wd,
+                ttP: Number(cumulativeProfit.toFixed(2)),
+                bal: Number((c + p + add - wd).toFixed(2)),
+                asset: r.asset || '',
+                sumWd: Number(cumulativeWithdraw.toFixed(2)),
+                status: r.status || 'Win'
+            };
+        });
+    }
+
+    function mergeRecords(serverRecords, localRecords) {
+        const map = new Map();
+
+        [...localRecords, ...serverRecords].forEach(r => {
+            map.set(recordKey(r), r);
+        });
+
+        return recalculateRecords([...map.values()]);
+    }
+
+    function saveCache() {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(records));
+    }
+
+    function loadCache() {
+        try {
+            const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
+            if (Array.isArray(cache) && cache.length) {
+                records = recalculateRecords(cache);
+                renderAll();
+            }
+        } catch (e) {
+            console.error('Load cache error:', e);
+        }
+    }
+
+    function normalizeSheetRow(r) {
+        return {
+            rawDate: r[0] ? new Date(r[0]).toISOString().split('T')[0] : '',
+            c: toNum(r[1]),
+            p: toNum(r[2]),
+            pct: toNum(r[3]),
+            add: toNum(r[4]),
+            wd: toNum(r[5]),
+            ttP: toNum(r[6]),
+            bal: toNum(r[7]),
+            asset: r[8] || '',
+            sumWd: toNum(r[9]),
+            status: r[10] || 'Win'
+        };
+    }
+
+    async function syncFromServer() {
+        try {
+            const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`, { cache: 'no-store' });
+            const data = await res.json();
+
+            if (!Array.isArray(data)) return;
+
+            const serverRecords = data.map(normalizeSheetRow);
+            records = mergeRecords(serverRecords, records);
+            saveCache();
+            renderAll();
+        } catch (e) {
+            console.error('Sync error:', e);
+        }
+    }
+
+    function renderAll() {
+        updateUI();
+        updateChart();
     }
 
     function updateUI() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
+
+        if (!records.length) {
+            document.getElementById('dashBal').innerText = '0.00';
+            document.getElementById('dashTtP').innerText = '0.00';
+            document.getElementById('dashWR').innerText = '0%';
+            document.getElementById('dashRemProfit').innerText = '0.00';
+            document.getElementById('inCap').value = 0;
+            return;
+        }
+
         let wins = 0;
         let totalP = 0;
         let totalW = 0;
 
-        const displayRecords = [...records].reverse();
-        
         records.forEach(r => {
-            if(r.status.toLowerCase().includes('win') || r.status === 'W') wins++;
-            totalP += r.p;
-            totalW += r.wd;
+            const isWin = (r.status || '').toLowerCase().includes('win') || r.status === 'W';
+            if (isWin) wins++;
+            totalP += toNum(r.p);
+            totalW += toNum(r.wd);
         });
+
+        const displayRecords = [...records].reverse();
 
         displayRecords.forEach(r => {
-            const isWin = r.status.toLowerCase().includes('win') || r.status === 'W';
-            tbody.innerHTML += `<tr>
-                <td>${r.dateDisp}<br><small style="color:var(--gold-l)">${r.asset}</small></td>
-                <td class="${isWin?'w':'l'}">${r.p>=0?'+':''}${r.p.toFixed(2)}</td>
-                <td>${r.pct}%</td>
-                <td style="font-weight:bold;">${r.bal.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
-            </tr>`;
+            const isWin = (r.status || '').toLowerCase().includes('win') || r.status === 'W';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${r.dateDisp}<br><small style="color:var(--gold-l)">${r.asset || '-'}</small></td>
+                    <td class="${isWin ? 'w' : 'l'}">${r.p >= 0 ? '+' : ''}${toNum(r.p).toFixed(2)}</td>
+                    <td>${toNum(r.pct).toFixed(2)}%</td>
+                    <td style="font-weight:bold;">${toNum(r.bal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+            `;
         });
 
-        if(records.length > 0) {
-            const latest = records[records.length - 1];
-            document.getElementById('dashBal').innerText = latest.bal.toLocaleString(undefined,{minimumFractionDigits:2});
-            document.getElementById('dashTtP').innerText = totalP.toLocaleString(undefined,{minimumFractionDigits:2});
-            document.getElementById('dashWR').innerText = ((wins/records.length)*100).toFixed(0) + "%";
-            document.getElementById('dashRemProfit').innerText = (totalP - totalW).toLocaleString(undefined,{minimumFractionDigits:2});
-            document.getElementById('inCap').value = latest.bal;
-        }
+        const latest = records[records.length - 1];
+
+        document.getElementById('dashBal').innerText =
+            toNum(latest.bal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        document.getElementById('dashTtP').innerText =
+            totalP.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        document.getElementById('dashWR').innerText =
+            ((wins / records.length) * 100).toFixed(0) + '%';
+
+        document.getElementById('dashRemProfit').innerText =
+            (totalP - totalW).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        fillCurrentCapital();
     }
 
     function updateChart() {
         const ctx = document.getElementById('equityChart').getContext('2d');
         const labels = records.map(r => r.dateDisp);
-        const data = records.map(r => r.bal);
+        const data = records.map(r => toNum(r.bal));
 
-        if(myChart) myChart.destroy();
+        if (myChart) myChart.destroy();
+
         myChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -174,10 +466,18 @@
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false }
+                },
                 scales: {
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#f9e295', font: { size: 10 } } },
-                    x: { grid: { display: false }, ticks: { color: '#f9e295', font: { size: 9 } } }
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#f9e295', font: { size: 10 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#f9e295', font: { size: 9 } }
+                    }
                 }
             }
         });
@@ -185,31 +485,89 @@
 
     async function save() {
         const btn = document.querySelector('.btn-save');
-        const c = parseFloat(document.getElementById('inCap').value) || 0;
-        const p = parseFloat(document.getElementById('inProfit').value) || 0;
-        const add = parseFloat(document.getElementById('inAdd').value) || 0;
-        const wd = parseFloat(document.getElementById('inWd').value) || 0;
-
-        const lastTtP = records.length > 0 ? records[records.length-1].ttP : 0;
-        const lastSumWd = records.length > 0 ? records[records.length-1].sumWd : 0;
 
         const payload = {
             date: document.getElementById('inDate').value,
-            asset: document.getElementById('inAsset').value,
-            c: c, p: p, pct: (c > 0 ? (p/c*100).toFixed(2) : 0),
-            add: add, wd: wd, ttP: (lastTtP + p),
-            bal: (c + p + add - wd), sumWd: (lastSumWd + wd),
+            asset: document.getElementById('inAsset').value.trim(),
+            c: getCurrentCapital(),
+            p: toNum(document.getElementById('inProfit').value),
+            add: toNum(document.getElementById('inAdd').value),
+            wd: toNum(document.getElementById('inWd').value),
             status: document.getElementById('inStatus').value
         };
 
+        if (!payload.date) {
+            alert('กรุณาเลือกวันที่');
+            return;
+        }
+
+        const optimisticRecord = {
+            rawDate: payload.date,
+            c: payload.c,
+            p: payload.p,
+            add: payload.add,
+            wd: payload.wd,
+            asset: payload.asset,
+            status: payload.status
+        };
+
+        btn.innerText = '⌛ กำลังซิงก์...';
+        btn.disabled = true;
+
+        records = mergeRecords([], [...records, optimisticRecord]);
+        saveCache();
+        renderAll();
+
         try {
-            btn.innerText = "⌛ กำลังซิงก์...";
-            btn.disabled = true;
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            setTimeout(() => { location.reload(); }, 1500);
-        } catch (e) { alert("ล้มเหลว"); btn.disabled = false; }
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    date: payload.date,
+                    asset: payload.asset,
+                    c: payload.c,
+                    p: payload.p,
+                    pct: payload.c > 0 ? Number((payload.p / payload.c * 100).toFixed(2)) : 0,
+                    add: payload.add,
+                    wd: payload.wd,
+                    status: payload.status
+                })
+            });
+
+            setTimeout(syncFromServer, 1200);
+
+            document.getElementById('inAsset').value = '';
+            document.getElementById('inProfit').value = '';
+            document.getElementById('inAdd').value = '0';
+            document.getElementById('inWd').value = '0';
+            document.getElementById('inStatus').value = 'Win';
+
+            fillCurrentCapital();
+        } catch (e) {
+            console.error('Save error:', e);
+            alert('บันทึกขึ้นหน้าจอแล้ว แต่ซิงก์ server ไม่สำเร็จในรอบนี้');
+        } finally {
+            btn.innerText = '💾 บันทึกและซิงก์ข้อมูล';
+            btn.disabled = false;
+        }
     }
-    window.onload = load;
+
+    async function init() {
+        loadCache();
+        fillCurrentCapital();
+        await syncFromServer();
+        fillCurrentCapital();
+        setInterval(syncFromServer, 10000);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) syncFromServer();
+    });
+
+    window.onload = init;
 </script>
 </body>
 </html>
