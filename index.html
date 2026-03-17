@@ -15,6 +15,7 @@
             --gold-l: #f9e295;
             --win: #2ecc71;
             --loss: #e74c3c;
+            --dd: #ff8c7a;
         }
 
         body {
@@ -75,6 +76,13 @@
             margin-bottom: 15px;
             border: 1px solid rgba(212,175,55,0.1);
             min-height: 220px;
+        }
+
+        .chart-note {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--gold-l);
+            text-align: center;
         }
 
         .form-box {
@@ -203,9 +211,9 @@
     </div>
 
     <div class="chart-container">
-    <canvas id="equityChart"></canvas>
-    <div id="ddInfo" style="margin-top:10px; font-size:0.8rem; color:var(--gold-l); text-align:center;"></div>
-</div>
+        <canvas id="equityChart"></canvas>
+        <div id="ddInfo" class="chart-note"></div>
+    </div>
 
     <div class="form-box">
         <div class="grid">
@@ -261,7 +269,7 @@
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ8SLlPvhJFwMxrt_sMw9RqEaz3UM3pQRW9Jnb-SBPyD2YHDnIAsNLP0Pkz-9oWvrE/exec';
-    const CACHE_KEY = 'trading_journal_cache_v5';
+    const CACHE_KEY = 'trading_journal_cache_v6';
 
     let records = [];
     let myChart = null;
@@ -299,7 +307,11 @@
         if (!dateStr) return '-';
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return dateStr;
-        return d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return d.toLocaleDateString('th-TH', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
     }
 
     function getCurrentCapital() {
@@ -349,38 +361,38 @@
     }
 
     function recalculateRecords(list) {
-    let cumulativeProfit = 0;
-    let cumulativeWithdraw = 0;
+        let cumulativeProfit = 0;
+        let cumulativeWithdraw = 0;
 
-    return sortRecords(list).map(r => {
-        const c = toNum(r.c);
-        const p = toNum(r.p);
-        const add = toNum(r.add);
-        const wd = toNum(r.wd);
+        return sortRecords(list).map(r => {
+            const c = toNum(r.c);
+            const p = toNum(r.p);
+            const add = toNum(r.add);
+            const wd = toNum(r.wd);
 
-        cumulativeProfit += p;
-        cumulativeWithdraw += wd;
+            cumulativeProfit += p;
+            cumulativeWithdraw += wd;
 
-        const hasTtP = r.ttP !== undefined && r.ttP !== null && r.ttP !== '';
-        const hasBal = r.bal !== undefined && r.bal !== null && r.bal !== '';
-        const hasSumWd = r.sumWd !== undefined && r.sumWd !== null && r.sumWd !== '';
+            const hasTtP = r.ttP !== undefined && r.ttP !== null && r.ttP !== '';
+            const hasBal = r.bal !== undefined && r.bal !== null && r.bal !== '';
+            const hasSumWd = r.sumWd !== undefined && r.sumWd !== null && r.sumWd !== '';
 
-        return {
-            rawDate: r.rawDate,
-            dateDisp: formatDateDisplay(r.rawDate),
-            c,
-            p,
-            pct: c > 0 ? Number((p / c * 100).toFixed(2)) : 0,
-            add,
-            wd,
-            ttP: hasTtP ? toNum(r.ttP) : Number(cumulativeProfit.toFixed(2)),
-            bal: hasBal ? toNum(r.bal) : Number((c + p + add - wd).toFixed(2)),
-            asset: r.asset || '',
-            sumWd: hasSumWd ? toNum(r.sumWd) : Number(cumulativeWithdraw.toFixed(2)),
-            status: String(r.status || 'W').trim().toUpperCase()
-        };
-    });
-}
+            return {
+                rawDate: r.rawDate,
+                dateDisp: formatDateDisplay(r.rawDate),
+                c,
+                p,
+                pct: c > 0 ? Number((p / c * 100).toFixed(2)) : 0,
+                add,
+                wd,
+                ttP: hasTtP ? toNum(r.ttP) : Number(cumulativeProfit.toFixed(2)),
+                bal: hasBal ? toNum(r.bal) : Number((c + p + add - wd).toFixed(2)),
+                asset: r.asset || '',
+                sumWd: hasSumWd ? toNum(r.sumWd) : Number(cumulativeWithdraw.toFixed(2)),
+                status: String(r.status || 'W').trim().toUpperCase()
+            };
+        });
+    }
 
     function mergeRecords(serverRecords, localRecords) {
         const map = new Map();
@@ -424,7 +436,7 @@
 
             script.onerror = function() {
                 cleanup();
-                reject(new Error('โหลดข้อมูลไม่สำเร็จ'));
+                reject(new Error('โหลดข้อมูลจากฐานข้อมูลไม่สำเร็จ'));
             };
 
             script.src = `${SCRIPT_URL}?callback=${cbName}&t=${Date.now()}`;
@@ -434,7 +446,7 @@
 
     async function syncFromServer() {
         try {
-            setStatus('กำลังโหลดข้อมูล...');
+            setStatus('กำลังโหลดข้อมูลจากฐานข้อมูล...');
             const data = await loadJSONP();
 
             if (!Array.isArray(data)) {
@@ -457,11 +469,6 @@
         }
     }
 
-    function renderAll() {
-        updateUI();
-        updateChart();
-    }
-
     function updateUI() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -471,6 +478,7 @@
             document.getElementById('dashTtP').innerText = '0.00';
             document.getElementById('dashWR').innerText = '0%';
             document.getElementById('dashRemProfit').innerText = '0.00';
+            document.getElementById('ddInfo').innerText = '';
             fillCurrentCapital();
             return;
         }
@@ -506,7 +514,7 @@
             toNum(latest.bal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         document.getElementById('dashTtP').innerText =
-            totalP.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            toNum(latest.ttP).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         document.getElementById('dashWR').innerText =
             ((wins / records.length) * 100).toFixed(0) + '%';
@@ -516,112 +524,114 @@
 
         fillCurrentCapital();
     }
-function getDrawdownSeries(list) {
-    let peak = 0;
-    let maxDD = 0;
-    let currentDD = 0;
 
-    const series = list.map(r => {
-        const equity = toNum(r.ttP);
+    function getDrawdownSeries(list) {
+        let peak = 0;
+        let maxDD = 0;
+        let currentDD = 0;
 
-        if (equity > peak) peak = equity;
+        const series = list.map(r => {
+            const equity = toNum(r.ttP);
 
-        const dd = peak > 0 ? ((peak - equity) / peak) * 100 : 0;
+            if (equity > peak) peak = equity;
 
-        if (dd > maxDD) maxDD = dd;
-        currentDD = dd;
+            const dd = peak > 0 ? ((peak - equity) / peak) * 100 : 0;
 
-        return Number(dd.toFixed(2));
-    });
+            if (dd > maxDD) maxDD = dd;
+            currentDD = dd;
 
-    return {
-        series,
-        maxDD: Number(maxDD.toFixed(2)),
-        currentDD: Number(currentDD.toFixed(2))
-    };
-}
+            return Number(dd.toFixed(2));
+        });
+
+        return {
+            series,
+            currentDD: Number(currentDD.toFixed(2)),
+            maxDD: Number(maxDD.toFixed(2))
+        };
+    }
+
     function updateChart() {
-    const ctx = document.getElementById('equityChart').getContext('2d');
-    const labels = records.map(r => r.dateDisp);
-    const profitData = records.map(r => toNum(r.ttP));
-    const dd = getDrawdownSeries(records);
+        const ctx = document.getElementById('equityChart').getContext('2d');
+        const labels = records.map(r => r.dateDisp);
+        const profitData = records.map(r => toNum(r.ttP));
+        const dd = getDrawdownSeries(records);
 
-    if (myChart) myChart.destroy();
+        if (myChart) myChart.destroy();
 
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [
-                {
-                    label: 'กำไรสะสม',
-                    data: profitData,
-                    borderColor: '#d4af37',
-                    backgroundColor: 'rgba(212, 175, 55, 0.10)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3,
-                    yAxisID: 'yProfit'
-                },
-                {
-                    label: 'Drawdown %',
-                    data: dd.series,
-                    borderColor: '#e74c3c',
-                    backgroundColor: 'rgba(231, 76, 60, 0)',
-                    borderWidth: 2,
-                    fill: false,
-                    tension: 0.3,
-                    yAxisID: 'yDD'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: {
-                        color: '#f9e295',
-                        boxWidth: 12,
-                        font: { size: 10 }
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'กำไรสะสม',
+                        data: profitData,
+                        borderColor: '#d4af37',
+                        backgroundColor: 'rgba(212, 175, 55, 0.10)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: 'yProfit'
+                    },
+                    {
+                        label: 'Drawdown %',
+                        data: dd.series,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.3,
+                        yAxisID: 'yDD'
                     }
-                }
+                ]
             },
-            scales: {
-                yProfit: {
-                    position: 'left',
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#f9e295', font: { size: 10 } }
-                },
-                yDD: {
-                    position: 'right',
-                    beginAtZero: true,
-                    grid: { drawOnChartArea: false },
-                    ticks: {
-                        color: '#ff9b8f',
-                        font: { size: 10 },
-                        callback: function(value) {
-                            return value + '%';
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: '#f9e295',
+                            boxWidth: 12,
+                            font: { size: 10 }
                         }
                     }
                 },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#f9e295', font: { size: 9 } }
-                }
-            }
-        }
-    });
-
-    const ddInfo = document.getElementById('ddInfo');
-    if (ddInfo) {
-        ddInfo.innerHTML = `Current DD: <span style="color:#ff9b8f">${dd.currentDD}%</span> &nbsp;|&nbsp; Max DD: <span style="color:#ff9b8f">${dd.maxDD}%</span>`;
-    }
-}
+                scales: {
+                    yProfit: {
+                        position: 'left',
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#f9e295', font: { size: 10 } }
+                    },
+                    yDD: {
+                        position: 'right',
+                        beginAtZero: true,
+                        grid: { drawOnChartArea: false },
+                        ticks: {
+                            color: '#ff9b8f',
+                            font: { size: 10 },
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#f9e295', font: { size: 9 } }
                     }
                 }
             }
         });
+
+        const ddInfo = document.getElementById('ddInfo');
+        ddInfo.innerHTML =
+            `Current DD: <span style="color:var(--dd)">${dd.currentDD}%</span> &nbsp;|&nbsp; Max DD: <span style="color:var(--dd)">${dd.maxDD}%</span>`;
+    }
+
+    function renderAll() {
+        updateUI();
+        updateChart();
     }
 
     async function save() {
