@@ -203,8 +203,9 @@
     </div>
 
     <div class="chart-container">
-        <canvas id="equityChart"></canvas>
-    </div>
+    <canvas id="equityChart"></canvas>
+    <div id="ddInfo" style="margin-top:10px; font-size:0.8rem; color:var(--gold-l); text-align:center;"></div>
+</div>
 
     <div class="form-box">
         <div class="grid">
@@ -348,34 +349,38 @@
     }
 
     function recalculateRecords(list) {
-        let cumulativeProfit = 0;
-        let cumulativeWithdraw = 0;
+    let cumulativeProfit = 0;
+    let cumulativeWithdraw = 0;
 
-        return sortRecords(list).map(r => {
-            const c = toNum(r.c);
-            const p = toNum(r.p);
-            const add = toNum(r.add);
-            const wd = toNum(r.wd);
+    return sortRecords(list).map(r => {
+        const c = toNum(r.c);
+        const p = toNum(r.p);
+        const add = toNum(r.add);
+        const wd = toNum(r.wd);
 
-           
-            cumulativeWithdraw += wd;
+        cumulativeProfit += p;
+        cumulativeWithdraw += wd;
 
-            return {
-                rawDate: r.rawDate,
-                dateDisp: formatDateDisplay(r.rawDate),
-                c,
-                p,
-                pct: c > 0 ? Number((p / c * 100).toFixed(2)) : 0,
-                add,
-                wd,
-                ttP: toNum(r.ttP),
-                bal: Number((c + p + add - wd).toFixed(2)),
-                asset: r.asset || '',
-                sumWd: Number(cumulativeWithdraw.toFixed(2)),
-                status: String(r.status || 'W').trim().toUpperCase()
-            };
-        });
-    }
+        const hasTtP = r.ttP !== undefined && r.ttP !== null && r.ttP !== '';
+        const hasBal = r.bal !== undefined && r.bal !== null && r.bal !== '';
+        const hasSumWd = r.sumWd !== undefined && r.sumWd !== null && r.sumWd !== '';
+
+        return {
+            rawDate: r.rawDate,
+            dateDisp: formatDateDisplay(r.rawDate),
+            c,
+            p,
+            pct: c > 0 ? Number((p / c * 100).toFixed(2)) : 0,
+            add,
+            wd,
+            ttP: hasTtP ? toNum(r.ttP) : Number(cumulativeProfit.toFixed(2)),
+            bal: hasBal ? toNum(r.bal) : Number((c + p + add - wd).toFixed(2)),
+            asset: r.asset || '',
+            sumWd: hasSumWd ? toNum(r.sumWd) : Number(cumulativeWithdraw.toFixed(2)),
+            status: String(r.status || 'W').trim().toUpperCase()
+        };
+    });
+}
 
     function mergeRecords(serverRecords, localRecords) {
         const map = new Map();
@@ -511,39 +516,108 @@
 
         fillCurrentCapital();
     }
+function getDrawdownSeries(list) {
+    let peak = 0;
+    let maxDD = 0;
+    let currentDD = 0;
 
+    const series = list.map(r => {
+        const equity = toNum(r.ttP);
+
+        if (equity > peak) peak = equity;
+
+        const dd = peak > 0 ? ((peak - equity) / peak) * 100 : 0;
+
+        if (dd > maxDD) maxDD = dd;
+        currentDD = dd;
+
+        return Number(dd.toFixed(2));
+    });
+
+    return {
+        series,
+        maxDD: Number(maxDD.toFixed(2)),
+        currentDD: Number(currentDD.toFixed(2))
+    };
+}
     function updateChart() {
-        const ctx = document.getElementById('equityChart').getContext('2d');
-        const labels = records.map(r => r.dateDisp);
-        const data = records.map(r => toNum(r.ttp));
+    const ctx = document.getElementById('equityChart').getContext('2d');
+    const labels = records.map(r => r.dateDisp);
+    const profitData = records.map(r => toNum(r.ttP));
+    const dd = getDrawdownSeries(records);
 
-        if (myChart) myChart.destroy();
+    if (myChart) myChart.destroy();
 
-        myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
                     label: 'กำไรสะสม',
-                    data,
+                    data: profitData,
                     borderColor: '#d4af37',
-                    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                    backgroundColor: 'rgba(212, 175, 55, 0.10)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.3
-                }]
+                    tension: 0.3,
+                    yAxisID: 'yProfit'
+                },
+                {
+                    label: 'Drawdown %',
+                    data: dd.series,
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.3,
+                    yAxisID: 'yDD'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: '#f9e295',
+                        boxWidth: 12,
+                        font: { size: 10 }
+                    }
+                }
             },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: {
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#f9e295', font: { size: 10 } }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#f9e295', font: { size: 9 } }
+            scales: {
+                yProfit: {
+                    position: 'left',
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#f9e295', font: { size: 10 } }
+                },
+                yDD: {
+                    position: 'right',
+                    beginAtZero: true,
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        color: '#ff9b8f',
+                        font: { size: 10 },
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#f9e295', font: { size: 9 } }
+                }
+            }
+        }
+    });
+
+    const ddInfo = document.getElementById('ddInfo');
+    if (ddInfo) {
+        ddInfo.innerHTML = `Current DD: <span style="color:#ff9b8f">${dd.currentDD}%</span> &nbsp;|&nbsp; Max DD: <span style="color:#ff9b8f">${dd.maxDD}%</span>`;
+    }
+}
                     }
                 }
             }
