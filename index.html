@@ -192,23 +192,27 @@
     <div id="statusBox" class="status-box"></div>
 
     <div class="dashboard">
-        <div class="card main-card">
-            <label>ยอดคงเหลือปัจจุบัน</label>
-            <b id="dashBal" style="font-size: 2.2rem; color: var(--gold);">0.00</b>
-        </div>
-        <div class="card">
-            <label>กำไรสะสม</label>
-            <b id="dashTtP">0.00</b>
-        </div>
-        <div class="card">
-            <label>Win Rate</label>
-            <b id="dashWR">0%</b>
-        </div>
-        <div class="card profit-card">
-            <label>กำไรที่ยังไม่ได้ถอน (ถอนได้ทันที)</label>
-            <b id="dashRemProfit" style="font-size: 1.8rem; color: var(--win);">0.00</b>
-        </div>
+    <div class="card main-card">
+        <label>ยอดคงเหลือปัจจุบัน</label>
+        <b id="dashBal" style="font-size: 2.2rem; color: var(--gold);">0.00</b>
     </div>
+    <div class="card">
+        <label>กำไรสะสม</label>
+        <b id="dashTtP">0.00</b>
+    </div>
+    <div class="card">
+        <label>ยอดถอนสะสม</label>
+        <b id="dashSumWd">0.00</b>
+    </div>
+    <div class="card">
+        <label>Win Rate</label>
+        <b id="dashWR">0%</b>
+    </div>
+    <div class="card profit-card">
+        <label>กำไรคงเหลือ (ที่ยังไม่ได้ถอน)</label>
+        <b id="dashRemProfit" style="font-size: 1.8rem; color: var(--win);">0.00</b>
+    </div>
+</div>
 
     <div class="chart-container">
         <canvas id="equityChart"></canvas>
@@ -473,15 +477,16 @@
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
 
-        if (!records.length) {
-            document.getElementById('dashBal').innerText = '0.00';
-            document.getElementById('dashTtP').innerText = '0.00';
-            document.getElementById('dashWR').innerText = '0%';
-            document.getElementById('dashRemProfit').innerText = '0.00';
-            document.getElementById('ddInfo').innerText = '';
-            fillCurrentCapital();
-            return;
-        }
+       if (!records.length) {
+    document.getElementById('dashBal').innerText = '0.00';
+    document.getElementById('dashTtP').innerText = '0.00';
+    document.getElementById('dashSumWd').innerText = '0.00';
+    document.getElementById('dashWR').innerText = '0%';
+    document.getElementById('dashRemProfit').innerText = '0.00';
+    document.getElementById('ddInfo').innerText = '';
+    fillCurrentCapital();
+    return;
+}
 
         let wins = 0;
         let totalP = 0;
@@ -511,16 +516,19 @@
         const latest = records[records.length - 1];
 
         document.getElementById('dashBal').innerText =
-            toNum(latest.bal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    toNum(latest.bal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        document.getElementById('dashTtP').innerText =
-            toNum(latest.ttP).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+document.getElementById('dashTtP').innerText =
+    toNum(latest.ttP).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        document.getElementById('dashWR').innerText =
-            ((wins / records.length) * 100).toFixed(0) + '%';
+document.getElementById('dashSumWd').innerText =
+    toNum(latest.sumWd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        document.getElementById('dashRemProfit').innerText =
-            (totalP - totalW).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+document.getElementById('dashWR').innerText =
+    ((wins / records.length) * 100).toFixed(0) + '%';
+
+document.getElementById('dashRemProfit').innerText =
+    (toNum(latest.ttP) - toNum(latest.sumWd)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         fillCurrentCapital();
     }
