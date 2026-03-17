@@ -259,8 +259,8 @@
 </div>
 
 <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxZ8T2rgfH3fHTkS1wtzNRnnaD07V1cl6SEPlJLdOCAPezf8bWNU1JMMFrVS-_VmuPv/exec';
-    const CACHE_KEY = 'trading_journal_cache_v3';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ8SLlPvhJFwMxrt_sMw9RqEaz3UM3pQRW9Jnb-SBPyD2YHDnIAsNLP0Pkz-9oWvrE/exec';
+    const CACHE_KEY = 'trading_journal_cache_v4';
 
     let records = [];
     let myChart = null;
@@ -275,32 +275,9 @@
         statusBox.textContent = msg;
     }
 
-    function clearStatus() {
-        statusBox.className = 'status-box';
-        statusBox.textContent = '';
-    }
-
     function toNum(v) {
         const n = parseFloat(v);
         return Number.isFinite(n) ? n : 0;
-    }
-
-    function isHeaderRow(row) {
-        if (Array.isArray(row)) {
-            return String(row[0] || '').includes('วันที่');
-        }
-        if (row && typeof row === 'object') {
-            const values = Object.values(row).join(' ');
-            return values.includes('วันที่') || values.includes('ทุน');
-        }
-        return false;
-    }
-
-    function formatDateDisplay(dateStr) {
-        if (!dateStr) return '-';
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return dateStr;
-        return d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
     function normalizeDateOnly(value) {
@@ -315,6 +292,13 @@
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    }
+
+    function formatDateDisplay(dateStr) {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
     function getCurrentCapital() {
@@ -339,55 +323,28 @@
     }
 
     function sortRecords(list) {
-        return [...list].sort((a, b) => {
-            const da = new Date(a.rawDate || 0).getTime();
-            const db = new Date(b.rawDate || 0).getTime();
-            return da - db;
-        });
+        return [...list].sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate));
     }
 
     function normalizeRow(row) {
-        if (!row || isHeaderRow(row)) return null;
+        if (!Array.isArray(row)) return null;
 
-        if (Array.isArray(row)) {
-            const rawDate = normalizeDateOnly(row[0]);
-            if (!rawDate) return null;
+        const rawDate = normalizeDateOnly(row[0]);
+        if (!rawDate) return null;
 
-            return {
-                rawDate,
-                c: toNum(row[1]),
-                p: toNum(row[2]),
-                pct: toNum(row[3]),
-                add: toNum(row[4]),
-                wd: toNum(row[5]),
-                ttP: toNum(row[6]),
-                bal: toNum(row[7]),
-                asset: row[8] || '',
-                sumWd: toNum(row[9]),
-                status: String(row[10] || 'W').trim().toUpperCase()
-            };
-        }
-
-        if (typeof row === 'object') {
-            const rawDate = normalizeDateOnly(row.date || row.Date || row['วันที่']);
-            if (!rawDate) return null;
-
-            return {
-                rawDate,
-                c: toNum(row.c ?? row.capital ?? row['ทุน'] ?? row['B']),
-                p: toNum(row.p ?? row.profit ?? row['กำไร/ขาดทุน'] ?? row['C']),
-                pct: toNum(row.pct ?? row.percent ?? row['% เพิ่ม/ลด'] ?? row['D']),
-                add: toNum(row.add ?? row['ลงทุนเพิ่ม'] ?? row['E']),
-                wd: toNum(row.wd ?? row.withdraw ?? row['ยอดถอน'] ?? row['F']),
-                ttP: toNum(row.ttP ?? row['กำไรสะสม'] ?? row['G']),
-                bal: toNum(row.bal ?? row.balance ?? row['ยอดคงเหลือวันนี้'] ?? row['H']),
-                asset: row.asset ?? row['สินทรัพย์'] ?? row['I'] ?? '',
-                sumWd: toNum(row.sumWd ?? row['ยอดถอนสะสม'] ?? row['J']),
-                status: String(row.status ?? row['สถานะ'] ?? row['K'] ?? 'W').trim().toUpperCase()
-            };
-        }
-
-        return null;
+        return {
+            rawDate,
+            c: toNum(row[1]),
+            p: toNum(row[2]),
+            pct: toNum(row[3]),
+            add: toNum(row[4]),
+            wd: toNum(row[5]),
+            ttP: toNum(row[6]),
+            bal: toNum(row[7]),
+            asset: row[8] || '',
+            sumWd: toNum(row[9]),
+            status: String(row[10] || 'W').trim().toUpperCase()
+        };
     }
 
     function recalculateRecords(list) {
@@ -441,35 +398,48 @@
                 setStatus(`โหลดข้อมูลจากเครื่องสำเร็จ ${records.length} รายการ`);
             }
         } catch (e) {
-            console.error('Load cache error:', e);
+            console.error(e);
         }
+    }
+
+    function loadJSONP() {
+        return new Promise((resolve, reject) => {
+            const cbName = 'jsonp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            const script = document.createElement('script');
+
+            window[cbName] = function(data) {
+                cleanup();
+                resolve(data);
+            };
+
+            function cleanup() {
+                if (script.parentNode) script.parentNode.removeChild(script);
+                delete window[cbName];
+            }
+
+            script.onerror = function() {
+                cleanup();
+                reject(new Error('โหลดข้อมูลแบบ JSONP ไม่สำเร็จ'));
+            };
+
+            script.src = `${SCRIPT_URL}?callback=${cbName}&t=${Date.now()}`;
+            document.body.appendChild(script);
+        });
     }
 
     async function syncFromServer() {
         try {
             setStatus('กำลังโหลดข้อมูลจาก Google Sheet...');
-            const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`, { cache: 'no-store' });
-
-            const text = await res.text();
-            let data;
-
-            try {
-                data = JSON.parse(text);
-            } catch (jsonErr) {
-                console.error('Response text:', text);
-                throw new Error('ข้อมูลที่ Apps Script ส่งกลับมาไม่ใช่ JSON');
-            }
+            const data = await loadJSONP();
 
             if (!Array.isArray(data)) {
                 throw new Error('ข้อมูลที่ได้ไม่ใช่ array');
             }
 
-            const normalized = data
-                .map(normalizeRow)
-                .filter(Boolean);
+            const normalized = data.map(normalizeRow).filter(Boolean);
 
             if (!normalized.length) {
-                throw new Error('อ่านข้อมูลได้ แต่ไม่มีรายการที่ใช้ได้');
+                throw new Error('ไม่มีข้อมูลในชีต หรืออ่านข้อมูลไม่ได้');
             }
 
             records = mergeRecords(normalized, []);
@@ -477,7 +447,7 @@
             renderAll();
             setStatus(`ซิงก์สำเร็จ ${records.length} รายการ`);
         } catch (e) {
-            console.error('Sync error:', e);
+            console.error(e);
             setStatus('โหลดข้อมูลไม่สำเร็จ: ' + e.message, 'err');
         }
     }
@@ -496,7 +466,7 @@
             document.getElementById('dashTtP').innerText = '0.00';
             document.getElementById('dashWR').innerText = '0%';
             document.getElementById('dashRemProfit').innerText = '0.00';
-            document.getElementById('inCap').value = 0;
+            fillCurrentCapital();
             return;
         }
 
@@ -511,9 +481,7 @@
             totalW += toNum(r.wd);
         });
 
-        const displayRecords = [...records].reverse();
-
-        displayRecords.forEach(r => {
+        [...records].reverse().forEach(r => {
             const isWin = String(r.status).toUpperCase().includes('W');
             tbody.innerHTML += `
                 <tr>
@@ -640,11 +608,11 @@
             document.getElementById('inWd').value = '0';
             document.getElementById('inStatus').value = 'W';
 
-            setStatus('บันทึกลงหน้าแอปแล้ว และกำลังดึงข้อมูลจริงจากชีต...');
+            setStatus('บันทึกลงหน้าแอปแล้ว กำลังซิงก์ข้อมูลจริงจากชีต...');
             setTimeout(syncFromServer, 1500);
         } catch (e) {
-            console.error('Save error:', e);
-            setStatus('บันทึกขึ้นหน้าแอปแล้ว แต่ซิงก์ server ไม่สำเร็จ', 'err');
+            console.error(e);
+            setStatus('บันทึกขึ้นหน้าแอปแล้ว แต่ส่งไปชีตไม่สำเร็จ', 'err');
         } finally {
             btn.innerText = '💾 บันทึกและซิงก์ข้อมูล';
             btn.disabled = false;
