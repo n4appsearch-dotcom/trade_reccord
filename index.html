@@ -192,31 +192,31 @@
     <div id="statusBox" class="status-box"></div>
 
     <div class="dashboard">
-    <div class="card main-card">
-        <label>ยอดคงเหลือปัจจุบัน</label>
-        <b id="dashBal" style="font-size: 2.2rem; color: var(--gold);">0.00</b>
-    </div>
-    <div class="card">
-        <label>กำไรสะสม</label>
-        <b id="dashTtP">0.00</b>
-    </div>
-    <div class="card">
-        <label>ยอดถอนสะสม</label>
-        <b id="dashSumWd">0.00</b>
-    </div>
-    <div class="card">
-        <label>Win Rate</label>
-        <b id="dashWR">0%</b>
-    </div>
-<div class="card">
-        <label>Deposit สะสม</label>
-        <b id="dashDeposit">0.00</b>
-    </div>
+        <div class="card main-card">
+            <label>ยอดคงเหลือปัจจุบัน</label>
+            <b id="dashBal" style="font-size: 2.2rem; color: var(--gold);">0.00</b>
+        </div>
+        <div class="card">
+            <label>กำไรสะสม</label>
+            <b id="dashTtP">0.00</b>
+        </div>
+        <div class="card">
+            <label>ยอดถอนสะสม</label>
+            <b id="dashSumWd">0.00</b>
+        </div>
+        <div class="card">
+            <label>Win Rate</label>
+            <b id="dashWR">0%</b>
+        </div>
+        <div class="card">
+            <label>Deposit สะสม</label>
+            <b id="dashDeposit">0.00</b>
+        </div>
         <div class="card profit-card">
-        <label>กำไรคงเหลือ (ที่ยังไม่ได้ถอน)</label>
-        <b id="dashRemProfit" style="font-size: 1.8rem; color: var(--win);">0.00</b>
+            <label>กำไรคงเหลือ (ที่ยังไม่ได้ถอน)</label>
+            <b id="dashRemProfit" style="font-size: 1.8rem; color: var(--win);">0.00</b>
+        </div>
     </div>
-</div>
 
     <div class="chart-container">
         <canvas id="equityChart"></canvas>
@@ -349,10 +349,8 @@
 
     function normalizeRow(row) {
         if (!Array.isArray(row)) return null;
-
         const rawDate = normalizeDateOnly(row[0]);
         if (!rawDate) return null;
-
         return {
             rawDate,
             c: toNum(row[1]),
@@ -364,35 +362,29 @@
             bal: toNum(row[7]),
             asset: row[8] || '',
             sumWd: toNum(row[9]),
-            status: String(row[10] || 'W').trim().toUpperCase()
+            status: String(row[10]|| 'W').trim().toUpperCase()
         };
     }
 
     function recalculateRecords(list) {
         let cumulativeProfit = 0;
         let cumulativeWithdraw = 0;
-
         return sortRecords(list).map(r => {
             const c = toNum(r.c);
             const p = toNum(r.p);
             const add = toNum(r.add);
             const wd = toNum(r.wd);
-
             cumulativeProfit += p;
             cumulativeWithdraw += wd;
-
             const hasTtP = r.ttP !== undefined && r.ttP !== null && r.ttP !== '';
             const hasBal = r.bal !== undefined && r.bal !== null && r.bal !== '';
             const hasSumWd = r.sumWd !== undefined && r.sumWd !== null && r.sumWd !== '';
-
             return {
                 rawDate: r.rawDate,
                 dateDisp: formatDateDisplay(r.rawDate),
-                c,
-                p,
+                c, p,
                 pct: c > 0 ? Number((p / c * 100).toFixed(2)) : 0,
-                add,
-                wd,
+                add, wd,
                 ttP: hasTtP ? toNum(r.ttP) : Number(cumulativeProfit.toFixed(2)),
                 bal: hasBal ? toNum(r.bal) : Number((c + p + add - wd).toFixed(2)),
                 asset: r.asset || '',
@@ -431,22 +423,18 @@
         return new Promise((resolve, reject) => {
             const cbName = 'jsonp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
             const script = document.createElement('script');
-
             window[cbName] = function(data) {
                 cleanup();
                 resolve(data);
             };
-
             function cleanup() {
                 if (script.parentNode) script.parentNode.removeChild(script);
                 delete window[cbName];
             }
-
             script.onerror = function() {
                 cleanup();
                 reject(new Error('โหลดข้อมูลจากฐานข้อมูลไม่สำเร็จ'));
             };
-
             script.src = `${SCRIPT_URL}?callback=${cbName}&t=${Date.now()}`;
             document.body.appendChild(script);
         });
@@ -456,17 +444,9 @@
         try {
             setStatus('กำลังโหลดข้อมูลจากฐานข้อมูล...');
             const data = await loadJSONP();
-
-            if (!Array.isArray(data)) {
-                throw new Error('ข้อมูลที่ได้ไม่ใช่ array');
-            }
-
+            if (!Array.isArray(data)) throw new Error('ข้อมูลที่ได้ไม่ใช่ array');
             const normalized = data.map(normalizeRow).filter(Boolean);
-
-            if (!normalized.length) {
-                throw new Error('ไม่มีข้อมูลในฐานข้อมูล หรืออ่านข้อมูลไม่ได้');
-            }
-
+            if (!normalized.length) throw new Error('ไม่มีข้อมูลในฐานข้อมูล');
             records = mergeRecords(normalized, []);
             saveCache();
             renderAll();
@@ -480,31 +460,32 @@
     function updateUI() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
-
-       if (!records.length) {
-    document.getElementById('dashBal').innerText = '0.00';
-    document.getElementById('dashTtP').innerText = '0.00';
-    document.getElementById('dashSumWd').innerText = '0.00';
-    document.getElementById('dashWR').innerText = '0%';
-    document.getElementById('dashRemProfit').innerText = '0.00';
-    document.getElementById('ddInfo').innerText = '';
-    fillCurrentCapital();
-    return;
-}
+        if (!records.length) {
+            document.getElementById('dashBal').innerText = '0.00';
+            document.getElementById('dashTtP').innerText = '0.00';
+            document.getElementById('dashSumWd').innerText = '0.00';
+            document.getElementById('dashWR').innerText = '0%';
+            document.getElementById('dashDeposit').innerText = '0.00';
+            document.getElementById('dashRemProfit').innerText = '0.00';
+            document.getElementById('ddInfo').innerText = '';
+            fillCurrentCapital();
+            return;
+        }
 
         let wins = 0;
         let totalP = 0;
         let totalW = 0;
+        let totalD = 0; // เพิ่มการคำนวณ Deposit สะสม
 
         records.forEach(r => {
             const isWin = String(r.status).toUpperCase().includes('W');
             if (isWin) wins++;
             totalP += toNum(r.p);
             totalW += toNum(r.wd);
+            totalD += toNum(r.add); // บวกยอดฝากสะสม
         });
 
         const recentRecords = records.slice(-7).reverse();
-
         recentRecords.forEach(r => {
             const isWin = String(r.status).toUpperCase().includes('W');
             tbody.innerHTML += `
@@ -518,22 +499,12 @@
         });
 
         const latest = records[records.length - 1];
-
-        document.getElementById('dashBal').innerText =
-    toNum(latest.bal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-document.getElementById('dashTtP').innerText =
-    toNum(latest.ttP).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-document.getElementById('dashSumWd').innerText =
-    toNum(latest.sumWd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-document.getElementById('dashWR').innerText =
-    ((wins / records.length) * 100).toFixed(0) + '%';
-
-document.getElementById('dashRemProfit').innerText =
-    (toNum(latest.ttP) - toNum(latest.sumWd)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
+        document.getElementById('dashBal').innerText = toNum(latest.bal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('dashTtP').innerText = toNum(latest.ttP).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('dashSumWd').innerText = toNum(latest.sumWd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('dashWR').innerText = ((wins / records.length) * 100).toFixed(0) + '%';
+        document.getElementById('dashDeposit').innerText = totalD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('dashRemProfit').innerText = (toNum(latest.ttP) - toNum(latest.sumWd)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         fillCurrentCapital();
     }
 
@@ -541,25 +512,15 @@ document.getElementById('dashRemProfit').innerText =
         let peak = 0;
         let maxDD = 0;
         let currentDD = 0;
-
         const series = list.map(r => {
             const equity = toNum(r.ttP);
-
             if (equity > peak) peak = equity;
-
             const dd = peak > 0 ? ((peak - equity) / peak) * 100 : 0;
-
             if (dd > maxDD) maxDD = dd;
             currentDD = dd;
-
             return Number(dd.toFixed(2));
         });
-
-        return {
-            series,
-            currentDD: Number(currentDD.toFixed(2)),
-            maxDD: Number(maxDD.toFixed(2))
-        };
+        return { series, currentDD: Number(currentDD.toFixed(2)), maxDD: Number(maxDD.toFixed(2)) };
     }
 
     function updateChart() {
@@ -567,9 +528,7 @@ document.getElementById('dashRemProfit').innerText =
         const labels = records.map(r => r.dateDisp);
         const profitData = records.map(r => toNum(r.ttP));
         const dd = getDrawdownSeries(records);
-
         if (myChart) myChart.destroy();
-
         myChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -603,11 +562,7 @@ document.getElementById('dashRemProfit').innerText =
                 plugins: {
                     legend: {
                         display: true,
-                        labels: {
-                            color: '#f9e295',
-                            boxWidth: 12,
-                            font: { size: 10 }
-                        }
+                        labels: { color: '#f9e295', boxWidth: 12, font: { size: 10 } }
                     }
                 },
                 scales: {
@@ -620,13 +575,7 @@ document.getElementById('dashRemProfit').innerText =
                         position: 'right',
                         beginAtZero: true,
                         grid: { drawOnChartArea: false },
-                        ticks: {
-                            color: '#ff9b8f',
-                            font: { size: 10 },
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        }
+                        ticks: { color: '#ff9b8f', font: { size: 10 }, callback: v => v + '%' }
                     },
                     x: {
                         grid: { display: false },
@@ -635,10 +584,8 @@ document.getElementById('dashRemProfit').innerText =
                 }
             }
         });
-
         const ddInfo = document.getElementById('ddInfo');
-        ddInfo.innerHTML =
-            `Current DD: <span style="color:var(--dd)">${dd.currentDD}%</span> &nbsp;|&nbsp; Max DD: <span style="color:var(--dd)">${dd.maxDD}%</span>`;
+        ddInfo.innerHTML = `Current DD: <span style="color:var(--dd)">${dd.currentDD}%</span> &nbsp;|&nbsp; Max DD: <span style="color:var(--dd)">${dd.maxDD}%</span>`;
     }
 
     function renderAll() {
@@ -648,7 +595,6 @@ document.getElementById('dashRemProfit').innerText =
 
     async function save() {
         const btn = document.querySelector('.btn-save');
-
         const payload = {
             date: document.getElementById('inDate').value,
             asset: document.getElementById('inAsset').value.trim(),
@@ -658,54 +604,31 @@ document.getElementById('dashRemProfit').innerText =
             wd: toNum(document.getElementById('inWd').value),
             status: document.getElementById('inStatus').value
         };
-
-        if (!payload.date) {
-            alert('กรุณาเลือกวันที่');
-            return;
-        }
-
+        if (!payload.date) { alert('กรุณาเลือกวันที่'); return; }
         const optimisticRecord = {
-            rawDate: payload.date,
-            c: payload.c,
-            p: payload.p,
-            add: payload.add,
-            wd: payload.wd,
-            asset: payload.asset,
-            status: payload.status
+            rawDate: payload.date, c: payload.c, p: payload.p, add: payload.add, wd: payload.wd, asset: payload.asset, status: payload.status
         };
-
         btn.innerText = '⌛ กำลังซิงก์...';
         btn.disabled = true;
-
         records = mergeRecords([], [...records, optimisticRecord]);
         saveCache();
         renderAll();
-
         try {
             await fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8'
-                },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({
-                    date: payload.date,
-                    asset: payload.asset,
-                    c: payload.c,
-                    p: payload.p,
+                    date: payload.date, asset: payload.asset, c: payload.c, p: payload.p,
                     pct: payload.c > 0 ? Number((payload.p / payload.c * 100).toFixed(2)) : 0,
-                    add: payload.add,
-                    wd: payload.wd,
-                    status: payload.status
+                    add: payload.add, wd: payload.wd, status: payload.status
                 })
             });
-
             document.getElementById('inAsset').value = '';
             document.getElementById('inProfit').value = '';
             document.getElementById('inAdd').value = '0';
             document.getElementById('inWd').value = '0';
             document.getElementById('inStatus').value = 'W';
-
             setStatus('บันทึกสำเร็จ กำลังซิงก์ข้อมูล...');
             setTimeout(syncFromServer, 1500);
         } catch (e) {
@@ -726,10 +649,7 @@ document.getElementById('dashRemProfit').innerText =
         setInterval(syncFromServer, 10000);
     }
 
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) syncFromServer();
-    });
-
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) syncFromServer(); });
     window.onload = init;
 </script>
 </body>
