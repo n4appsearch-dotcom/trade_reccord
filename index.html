@@ -526,66 +526,62 @@
     function updateChart() {
         const ctx = document.getElementById('equityChart').getContext('2d');
         const labels = records.map(r => r.dateDisp);
-        const profitData = records.map(r => toNum(r.ttP));
-        const dd = getDrawdownSeries(records);
-        if (myChart) myChart.destroy();
+        
+        // คำนวณกำไรสะสมเพียวๆ (เอาเฉพาะช่องกำไร/ขาดทุนมาบวกกัน)
+        let runningProfit = 0;
+        const profitData = records.map(r => {
+            runningProfit += toNum(r.p);
+            return runningProfit;
+        });
+
+        if(myChart) myChart.destroy();
+        
         myChart = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: 'กำไรสะสม',
-                        data: profitData,
-                        borderColor: '#d4af37',
-                        backgroundColor: 'rgba(212, 175, 55, 0.10)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3,
-                        yAxisID: 'yProfit'
-                    },
-                    {
-                        label: 'Drawdown %',
-                        data: dd.series,
-                        borderColor: '#e74c3c',
-                        backgroundColor: 'rgba(231, 76, 60, 0)',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.3,
-                        yAxisID: 'yDD'
-                    }
-                ]
+            data: { 
+                labels: labels, 
+                datasets: [{ 
+                    label: 'กำไรสะสมสุทธิ (PNL)', 
+                    data: profitData, 
+                    borderColor: '#d4af37', 
+                    backgroundColor: 'rgba(212, 175, 55, 0.15)', 
+                    borderWidth: 2,
+                    fill: true, 
+                    tension: 0.3,
+                    // ทำให้จุดเป็นสีเขียวถ้ากำไร สีแดงถ้าขาดทุน
+                    pointBackgroundColor: profitData.map(v => v >= 0 ? '#2ecc71' : '#e74c3c'),
+                    pointRadius: 3
+                }] 
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: true,
-                        labels: { color: '#f9e295', boxWidth: 12, font: { size: 10 } }
+            options: { 
+                responsive: true, 
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let val = context.raw;
+                                return ' กำไรสะสม: ' + (val >= 0 ? '+' : '') + val.toFixed(2);
+                            }
+                        }
                     }
-                },
-                scales: {
-                    yProfit: {
-                        position: 'left',
+                }, 
+                scales: { 
+                    y: { 
                         grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#f9e295', font: { size: 10 } }
-                    },
-                    yDD: {
-                        position: 'right',
-                        beginAtZero: true,
-                        grid: { drawOnChartArea: false },
-                        ticks: { color: '#ff9b8f', font: { size: 10 }, callback: v => v + '%' }
-                    },
-                    x: {
+                        ticks: { color: '#f9e295', font: { size: 10 } } 
+                    }, 
+                    x: { 
                         grid: { display: false },
-                        ticks: { color: '#f9e295', font: { size: 9 } }
-                    }
-                }
+                        ticks: { color: '#f9e295', font: { size: 9 } } 
+                    } 
+                } 
             }
         });
+
+        // ซ่อนข้อความ Drawdown เดิมทิ้งไป เพื่อความสะอาดตา
         const ddInfo = document.getElementById('ddInfo');
-        ddInfo.innerHTML = `Current DD: <span style="color:var(--dd)">${dd.currentDD}%</span> &nbsp;|&nbsp; Max DD: <span style="color:var(--dd)">${dd.maxDD}%</span>`;
+        if (ddInfo) ddInfo.style.display = 'none';
     }
 
     function renderAll() {
