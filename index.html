@@ -525,15 +525,27 @@
 
     function updateChart() {
         const ctx = document.getElementById('equityChart').getContext('2d');
-        const labels = records.map(r => r.dateDisp);
         
-        // ดึงเฉพาะกำไร/ขาดทุนของไม้นั้นๆ เพียวๆ ไม่ต้องสะสม
-        const profitData = records.map(r => toNum(r.p)); 
+        // 1. ตัดเอาเฉพาะ 20 รายการล่าสุด
+        const recentRecords = records.slice(-20);
+
+        // 2. จัดรูปแบบวันที่ให้เป็น DD/MM/YY (เช่น 15/06/69)
+        const labels = recentRecords.map(r => {
+            const parts = r.dateDisp.split('/');
+            if (parts.length === 3) {
+                const shortYear = parts[2].slice(-2); // เอาแค่ 2 ตัวท้ายของปี
+                return `${parts[0]}/${parts[1]}/${shortYear}`;
+            }
+            return r.dateDisp;
+        });
+        
+        // 3. ดึงข้อมูลกำไร/ขาดทุน
+        const profitData = recentRecords.map(r => parseFloat(r.p) || 0);
 
         if(myChart) myChart.destroy();
         
         myChart = new Chart(ctx, {
-            type: 'bar', // เปลี่ยนจากเส้นเป็นแท่ง
+            type: 'bar',
             data: { 
                 labels: labels, 
                 datasets: [{ 
@@ -541,7 +553,7 @@
                     data: profitData, 
                     // แท่งเขียวเมื่อบวก แท่งแดงเมื่อลบ
                     backgroundColor: profitData.map(v => v >= 0 ? 'rgba(46, 204, 113, 0.85)' : 'rgba(231, 76, 60, 0.85)'),
-                    borderRadius: 4 // ลบมุมแท่งให้ดูสวยงาม
+                    borderRadius: 4
                 }] 
             },
             options: { 
@@ -570,6 +582,7 @@
             }
         });
 
+        // ซ่อนข้อความ Drawdown ด้านล่างทิ้งไปเพื่อความสะอาดตา
         const ddInfo = document.getElementById('ddInfo');
         if (ddInfo) ddInfo.style.display = 'none';
     }
