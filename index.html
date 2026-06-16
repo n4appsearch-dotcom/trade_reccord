@@ -527,30 +527,21 @@
         const ctx = document.getElementById('equityChart').getContext('2d');
         const labels = records.map(r => r.dateDisp);
         
-        // คำนวณกำไรสะสมเพียวๆ (เอาเฉพาะช่องกำไร/ขาดทุนมาบวกกัน)
-        let runningProfit = 0;
-        const profitData = records.map(r => {
-            runningProfit += toNum(r.p);
-            return runningProfit;
-        });
+        // ดึงเฉพาะกำไร/ขาดทุนของไม้นั้นๆ เพียวๆ ไม่ต้องสะสม
+        const profitData = records.map(r => toNum(r.p)); 
 
         if(myChart) myChart.destroy();
         
         myChart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar', // เปลี่ยนจากเส้นเป็นแท่ง
             data: { 
                 labels: labels, 
                 datasets: [{ 
-                    label: 'กำไรสะสมสุทธิ (PNL)', 
+                    label: 'กำไร/ขาดทุน รายไม้', 
                     data: profitData, 
-                    borderColor: '#d4af37', 
-                    backgroundColor: 'rgba(212, 175, 55, 0.15)', 
-                    borderWidth: 2,
-                    fill: true, 
-                    tension: 0.3,
-                    // ทำให้จุดเป็นสีเขียวถ้ากำไร สีแดงถ้าขาดทุน
-                    pointBackgroundColor: profitData.map(v => v >= 0 ? '#2ecc71' : '#e74c3c'),
-                    pointRadius: 3
+                    // แท่งเขียวเมื่อบวก แท่งแดงเมื่อลบ
+                    backgroundColor: profitData.map(v => v >= 0 ? 'rgba(46, 204, 113, 0.85)' : 'rgba(231, 76, 60, 0.85)'),
+                    borderRadius: 4 // ลบมุมแท่งให้ดูสวยงาม
                 }] 
             },
             options: { 
@@ -561,7 +552,7 @@
                         callbacks: {
                             label: function(context) {
                                 let val = context.raw;
-                                return ' กำไรสะสม: ' + (val >= 0 ? '+' : '') + val.toFixed(2);
+                                return ' ผลลัพธ์: ' + (val >= 0 ? '+' : '') + val.toFixed(2);
                             }
                         }
                     }
@@ -579,7 +570,6 @@
             }
         });
 
-        // ซ่อนข้อความ Drawdown เดิมทิ้งไป เพื่อความสะอาดตา
         const ddInfo = document.getElementById('ddInfo');
         if (ddInfo) ddInfo.style.display = 'none';
     }
